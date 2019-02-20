@@ -497,6 +497,49 @@ void slab_tl_neff::neff_search(bool mode)
 	}
 }
 
+int slab_tl_neff::get_nmodes(bool mode)
+{
+	// return the number of computed propagation constants for a given polarisation
+	// it can be the case that the predicted value M is greater than the actual number of modes in a waveguide
+
+	return nbeta(mode); 
+}
+
+double slab_tl_neff::get_neff(int i, bool mode)
+{
+	// return the i^{th} effective index for a given polarisation
+	// by convention mode == true => TE modes, mode == false => TM modes
+
+	try {
+		if (nbeta(mode) > 0) {
+			if (i<0 || i > nbeta(mode)) {
+				throw std::range_error("Error: double slab_wg::get_neff(int i, bool t)\n Attempting to access arrays out of range\n");
+				return 0;
+			}
+			else {
+				if (mode) {
+					return betaE[i] / k;
+				}
+				else {
+					return betaH[i] / k;
+				}
+			}
+		}
+		else {
+			throw std::invalid_argument("Error: double slab::get_neff(int i, bool t)\nNo modes have been computed\n");
+			return 0;
+		}
+	}
+	catch (std::range_error &e) {
+		std::cerr << e.what();
+		return 0;
+	}
+	catch (std::invalid_argument &e) {
+		useful_funcs::exit_failure_output(e.what());
+		exit(EXIT_FAILURE);
+	}
+}
+
 // Definitions for the three layer slab with optical mode profile calculation
 slab_tl_mode::slab_tl_mode(void)
 {

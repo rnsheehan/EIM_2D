@@ -10,7 +10,7 @@
 
 int main(int argc, char *argv[])
 {
-
+	testing::slab_wg_mode_calc(); 
 
 	std::cout<<"Press enter to close console\n";
 	std::cin.get(); 

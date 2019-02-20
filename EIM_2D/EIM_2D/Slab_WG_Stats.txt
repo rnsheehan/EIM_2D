@@ -1,0 +1,50 @@
+Output File for the slab waveguide calculator
+
+Waveguide width = 2.5 microns
+Wavelength = 1.55 microns
+Wavenumber = 4.05367 inverse microns
+
+Core Index = 3.293
+Substrate Index = 3.29152
+Cladding Index = 3.29152
+
+Numerical Aperture = 0.0987172
+V-Parameter = 0.500209
+Number of Modes = 1
+
+TE Modes
+There are 1 calculated TE modes
+TE_{1} = 13.34386596 , n_eff_{1} = 3.291800451
+
+Confinement Factor 1 = 0.3343818265
+
+Normalisation Constant 1 = 2.861886739
+
+Phase 1 = 0
+
+Effective Width 1 = 13.98234215
+
+h_1 = 0.3602702448
+
+p_1 = 0.1741804916
+
+q_1 = 0.1741804916
+
+TM Modes
+There are 1 calculated TM modes
+TM_{1} = 13.3438646 , n_eff_{1} = 3.291800116
+
+Confinement Factor 1 = 0.3340579752
+
+Normalisation Constant 1 = 0.02499832652
+
+Phase 1 = 0
+
+Effective Width 1 = 13.99563661
+
+h_1 = 0.3603206191
+
+p_1 = 0.1740762603
+
+q_1 = 0.1740762603
+

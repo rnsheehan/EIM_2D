@@ -49,7 +49,7 @@ void testing::slab_wg_mode_calc()
 
 	sl_obj.compute_neff(TM);
 
-	/*int N = 501; 
+	int N = 501; 
 	double Lz = 3.0; 
 	std::string stor = ""; 
 
@@ -57,7 +57,7 @@ void testing::slab_wg_mode_calc()
 
 	sl_obj.output_modes(TE, N, Lz, stor); 
 
-	std::cout << "Complete\n";*/
+	std::cout << "Complete\n";
 }
 
 void testing::fl_slab_wg_neff_calc()
@@ -88,13 +88,6 @@ void testing::fl_slab_wg_mode_calc()
 	// R. Sheehan 20 - 2 - 2019
 
 	double W, Wr, WL, Nc, Ns, Nr, Ncl;
-
-	// Case A => Field Oscillating in Core and Ridge
-	// For there to be a solution one has to have ns <= ncl < nr < nc
-	//W = 0.5; Wr = 1.0; WL = 1.55; // n_{TM} = 3.21803
-	//W = 0.5; Wr = 0.5; WL = 1.55; // n_{TM} = 3.21245
-	//W = 1.0; Wr = 0.5; WL = 1.55; // n_{TM} = 3.327
-	//Nc = 3.38; Ns = 1.0; Nr = 3.17; Ncl = 1.0;
 
 	// Case B: Field Oscillating in Core Only
 	// For there to be a solution one has to have ncl < nm < nc, where nm = Max(nr,ns)

@@ -15,6 +15,8 @@ public:
 protected:	
 	int nbeta(bool mode); // get the number of computed modes in a waveguide
 
+	double _beta(int i, bool t); // return the computed propagation constants
+
 	double h(int i, bool t); // wavenumber in core
 
 	double p(int i, bool t); // wavenumber in substrate
@@ -22,8 +24,6 @@ protected:
 	double q(int i, bool t); // wavenumber in cladding
 
 	double r(int i, bool t); // wavenumber in rib
-
-	double _beta(int i, bool t); // return the computed propagation constants
 
 protected:
 	// protected members, only to be accessed through derived classes
@@ -86,6 +86,10 @@ public:
 	void set_params(double width, double lambda, double ncore, double nsub, double nclad); // assign the parameters needed to perform the neff_search calculation
 
 	void neff_search(bool mode); // compute the effective indices for a waveguide
+
+	int get_nmodes(bool mode); // return the number of computed modes
+
+	double get_neff(int i, bool mode); // return the ith computed effective index 
 
 private:
 	// methods that the user does not need access to

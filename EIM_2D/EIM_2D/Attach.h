@@ -51,6 +51,7 @@ static const std::string dottxt=".txt";
 #include "Templates.h"
 #include "Useful.h"
 #include "Slab_WG.h"
+#include "Eff_Indx_Method.h"
 #include "Test_Functions.h"
 
 #endif

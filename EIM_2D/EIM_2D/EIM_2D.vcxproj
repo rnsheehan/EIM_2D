@@ -77,6 +77,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Eff_Indx_Method.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Slab_WG.cpp" />
     <ClCompile Include="Test_Functions.cpp" />
@@ -84,6 +85,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Attach.h" />
+    <ClInclude Include="Eff_Indx_Method.h" />
     <ClInclude Include="Slab_WG.h" />
     <ClInclude Include="Templates.h" />
     <ClInclude Include="Test_Functions.h" />
