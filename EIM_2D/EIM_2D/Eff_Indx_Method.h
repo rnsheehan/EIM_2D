@@ -24,10 +24,10 @@ public:
 
 	//virtual void reduce_wg() = 0; // each derived class will reduce 2D - 1D slightly differently, don't really need this
 
-	void get_index(); // compute the effective index of the 2D structure
+	void get_index(bool loud = false); // compute the effective index of the 2D structure
 
 	// setters
-	inline void set_W(double &val) { width = val;  }
+	/*inline void set_W(double &val) { width = val;  }
 	inline void set_H(double &val) { height = val; }
 	inline void set_E(double &val) { etch_depth = val; }
 	inline void set_T(double &val) { slab_height = val; }
@@ -38,10 +38,10 @@ public:
 	inline void set_Nrib(double &val) { nrib = val; }
 	inline void set_Nclad(double &val) { nclad = val; }
 	
-	inline void set_WL(double &val) { lambda = val; }
+	inline void set_WL(double &val) { lambda = val; }*/
 
 	// getters
-	inline double get_W() { return width;  }
+	/*inline double get_W() { return width;  }
 	inline double get_H() { return height; }
 	inline double get_E() { return etch_depth; }
 	inline double get_T() { return slab_height; }
@@ -50,7 +50,7 @@ public:
 	inline double get_Ncore() { return ncore; }
 	inline double get_Nsub() { return nsub; }
 	inline double get_Nrib() { return nrib; }
-	inline double get_Nclad() { return nclad; }
+	inline double get_Nclad() { return nclad; }*/
 
 protected:
 	bool pol; // polarisation
@@ -86,11 +86,47 @@ class Rectangular : public EIM
 public:
 	Rectangular(); 
 
-	Rectangular(double W, double H, double Ncore, double Nclad, double WL); 
+	Rectangular(bool polarisation, double W, double H, double Ncore, double Nclad, double WL); 
 
-	void set_params(double W, double H, double Ncore, double Nclad, double WL);
+	void set_params(bool polarisation, double W, double H, double Ncore, double Nclad, double WL);
 
-	void reduce_wg(); 
+	void reduce_wg(bool loud = false); 
+};
+
+class Wire : public EIM
+{
+public:
+	Wire();
+
+	Wire(bool polarisation, double W, double H, double Ncore, double Nsub, double Nclad, double WL);
+
+	void set_params(bool polarisation, double W, double H, double Ncore, double Nsub, double Nclad, double WL);
+
+	void reduce_wg(bool loud = false);
+};
+
+class Rib : public EIM
+{
+public:
+	Rib(); 
+
+	Rib(bool polarisation, double W, double E, double T, double Ncore, double Nsub, double Nclad, double WL); 
+
+	void set_params(bool polarisation, double W, double E, double T, double Ncore, double Nsub, double Nclad, double WL);
+
+	void reduce_wg(bool loud = false); 
+};
+
+class Shallow_Ridge : public EIM
+{
+public:
+	Shallow_Ridge();
+
+	Shallow_Ridge(bool polarisation, double W, double E, double T, double D, double Ncore, double Nsub, double Nrib, double Nclad, double WL);
+
+	void set_params(bool polarisation, double W, double E, double T, double D, double Ncore, double Nsub, double Nrib, double Nclad, double WL);
+
+	void reduce_wg(bool loud = false);
 };
 
 #endif

@@ -497,6 +497,35 @@ void slab_tl_neff::neff_search(bool mode)
 	}
 }
 
+void slab_tl_neff::report(bool mode)
+{
+	// print the computed results to screen
+	std::cout << "Output for the slab waveguide calculator\n";
+	std::cout << "\n";
+	std::cout << "Waveguide width = " << d << " microns\n";
+	std::cout << "Wavelength = " << l << " microns\n";
+	std::cout << "Wavenumber = " << k << " inverse microns\n";
+	std::cout << "\n";
+	std::cout << "Core Index = " << nc << "\n";
+	std::cout << "Substrate Index = " << ns << "\n";
+	std::cout << "Cladding Index = " << ncl << "\n";
+	std::cout << "\n";
+	std::cout << "Numerical Aperture = " << na << "\n";
+	std::cout << "V-Parameter = " << V << "\n";
+	std::cout << "Number of Modes = " << M << "\n";
+	std::cout << "\n";
+
+	std::string pol = (mode ? "TE" : "TM");
+
+	std::cout << pol << " Modes\n";
+	std::cout << "There are " << nbeta(mode) << " calculated " + pol + " modes\n";
+
+	for (int i = 0; i<nbeta(mode); i++) {
+		std::cout << pol + "_{" << i + 1 << "} = " << std::setprecision(10) << _beta(i, mode) << " , n_eff_{" << i + 1 << "} = " << std::setprecision(10) << (_beta(i, mode) / k) << "\n";
+	}
+	std::cout << "\n";
+}
+
 int slab_tl_neff::get_nmodes(bool mode)
 {
 	// return the number of computed propagation constants for a given polarisation

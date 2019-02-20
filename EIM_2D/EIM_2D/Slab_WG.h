@@ -87,6 +87,8 @@ public:
 
 	void neff_search(bool mode); // compute the effective indices for a waveguide
 
+	void report(bool mode);
+
 	int get_nmodes(bool mode); // return the number of computed modes
 
 	double get_neff(int i, bool mode); // return the ith computed effective index 

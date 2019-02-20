@@ -141,3 +141,55 @@ void testing::coupled_slab_wg_calc()
 
 	}
 }
+
+void testing::eim_rect_wg()
+{
+	// Approximate the effective index of a rectangular waveguide using EIM
+	// R. Sheehan 20 - 2 - 2019
+
+	// Confirmed from online simulator that method is accurate to within 1e-3
+	// Seems to be more accurate when computing TE modes (starting from TM)
+	// R. Sheehan 20 - 2 - 2019
+
+	bool polarisation = TE; 
+	double WL, W, H, nc, ncl; 
+
+	WL = 1.55; 
+	W = 2; H = 1; 
+	nc = 3.38; ncl = 3.17; 
+
+	Rectangular wguide; 
+
+	wguide.set_params(polarisation, W, H, nc, ncl, WL); 
+
+	wguide.reduce_wg(); 
+
+	wguide.get_index(true); 
+}
+
+void testing::eim_wire_wg()
+{
+	// Approximate the effective index of a wire waveguide using EIM
+	// R. Sheehan 20 - 2 - 2019
+
+	// Confirmed from online simulator that method is accurate to within 1e-3
+	// Seems to be more accurate when computing TE modes (starting from TM)
+	// When dealing with wire waveguides the TE mode (starting from TM) approximates 
+	// the TM mode of the online simulator and vice versa
+	// R. Sheehan 20 - 2 - 2019
+
+	bool polarisation = TE;
+	double WL, W, H, nc, ns, ncl;
+
+	WL = 1.55;
+	W = 1; H = 0.5;
+	nc = 2.45; ns = 1.45; ncl = 1.0;
+
+	Wire wguide;
+
+	wguide.set_params(polarisation, W, H, nc, ns, ncl, WL);
+
+	wguide.reduce_wg();
+
+	wguide.get_index(true);
+}

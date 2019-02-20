@@ -10,7 +10,11 @@
 
 int main(int argc, char *argv[])
 {
-	testing::slab_wg_mode_calc(); 
+	//testing::slab_wg_mode_calc(); 
+
+	//testing::eim_rect_wg(); 
+
+	testing::eim_wire_wg(); 
 
 	std::cout<<"Press enter to close console\n";
 	std::cin.get(); 

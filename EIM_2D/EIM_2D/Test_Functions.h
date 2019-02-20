@@ -16,6 +16,10 @@ namespace testing {
 
 	void coupled_slab_wg_calc(); 
 
+	void eim_rect_wg(); 
+
+	void eim_wire_wg();
+
 }
 
 #endif
