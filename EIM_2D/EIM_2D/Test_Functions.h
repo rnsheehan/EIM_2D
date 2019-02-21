@@ -8,17 +8,17 @@ namespace testing {
 	
 	void slab_wg_neff_calc(); 
 
-	void slab_wg_mode_calc(); 
-
 	void fl_slab_wg_neff_calc(); 
 
 	void fl_slab_wg_mode_calc(); 
 
-	void coupled_slab_wg_calc(); 
-
 	void eim_rect_wg(); 
 
 	void eim_wire_wg();
+
+	void eim_rib_wg();
+
+	void eim_ridge_wg(); 
 
 }
 

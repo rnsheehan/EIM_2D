@@ -1,0 +1,7 @@
+Program Exit Explanation
+
+Error occurred: Thu Feb 21 13:38:35 2019
+
+Error: void EIM::get_index()
+eta_one.two(): 0 is not correct
+

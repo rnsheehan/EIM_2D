@@ -104,40 +104,6 @@ private:
 	double g; // Asymmetry factor
 };
 
-class slab_tl_mode : public slab_tl_neff {
-	// class which is used to compute the shapes of optical modes in a three layer slab
-public:
-	slab_tl_mode(void); 
-
-	slab_tl_mode(double width, double lambda, double ncore, double nsub, double nclad);
-
-	void compute_neff(bool mode);
-
-	void output_all_stats(std::string &storage_directory); 
-
-	void output_modes(bool mode, int N, double Lx, std::string &storage_directory); // Output solutions to a file
-
-private:
-	// Functions needed to compute the shape of the waveguide mode
-	double g1(int i, bool t);
-
-	double g2(int i, bool t);
-
-	double deff(int i, bool t); // effective width of waveguide mode
-
-	double phase(int i, bool t); // phase of waveguide mode
-
-	double norm_const(int i, bool t); // normalisation constant of waveguide mode
-
-	double conf_fact(int i, bool t); // Mode confinement factor
-
-	double TE_TM(double x, int i, bool mode); // shape of waveguide mode
-
-	double eigeneqn(double x, bool t); // Non-linear equation for the propagation constants
-	
-	void output_stats(bool mode, std::ofstream &file_obj); // write computed mode statistics to a file
-};
-
 // Four Layer Slab
 
 class slab_fl_neff_B : protected slab {
@@ -160,52 +126,16 @@ public:
 
 	void neff_search(bool mode);
 
+	void report(bool mode);
+
+	int get_nmodes(bool mode); // return the number of computed modes
+
+	double get_neff(int i, bool mode); // return the ith computed effective index
+
 private:
 	double eigeneqn_b(double x, int mm, bool t);
 
 	double zbrent(double x1, double x2, double tol, bool t, int mm); // Brent method search for roots of eigeneqn_b
-};
-
-class slab_fl_mode_B : public slab_fl_neff_B {
-	// Class for computing the effective indices and mode profiles in type B four layer slab
-public:
-	slab_fl_mode_B(void);
-
-	slab_fl_mode_B(double width, double rib_width, double lambda, double ncore, double nsub, double nclad, double nrib);
-
-	void compute_neff(bool mode); 
-
-	//void output_all_stats(std::string &storage_directory);
-
-	//void output_modes(bool mode, int N, double Lx, std::string &storage_directory); // Output solutions to a file
-
-private:
-	double phase(int i, bool t); // phase of waveguide mode
-
-	double TE_TM(double x, int i, bool mode); // shape of waveguide mode
-
-	//double eigeneqn(double x, bool t); // Non-linear equation for the propagation constants
-
-	//void output_stats(bool mode, std::ofstream &file_obj); // write computed mode statistics to a file
-};
-
-// class for computing the coupling coefficient of the coupled slab waveguide
-
-class coupled_slab_tl_neff : public slab_tl_neff {
-
-public:
-	coupled_slab_tl_neff();
-
-	coupled_slab_tl_neff(double separation, double width, double lambda, double ncore, double nsub);
-
-	void set_params(double separation, double width, double lambda, double ncore, double nsub);
-
-	double compute_coupling_coeff(bool mode); 
-
-private:
-	double slab_sep; 
-	double coupling_coeff; 
-	double L_coupling; 
 };
 
 #endif

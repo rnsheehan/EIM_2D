@@ -14,7 +14,11 @@ int main(int argc, char *argv[])
 
 	//testing::eim_rect_wg(); 
 
-	testing::eim_wire_wg(); 
+	//testing::eim_wire_wg(); 
+
+	//testing::eim_rib_wg(); 
+
+	testing::eim_ridge_wg(); 
 
 	std::cout<<"Press enter to close console\n";
 	std::cin.get(); 

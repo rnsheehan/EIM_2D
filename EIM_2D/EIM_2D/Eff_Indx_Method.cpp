@@ -32,9 +32,9 @@ void EIM::get_index(bool loud)
 		bool c1 = width > 0.0 ? true : false; 
 		bool c2 = eta_one.size() > 0 ? true : false; 
 		bool c3 = eta_two.size() > 0 ? true : false;
-		bool c4 = eta_two.size() == eta_one.size() ? true : false;
+		//bool c4 = eta_two.size() == eta_one.size() ? true : false;
 		bool c5 = lambda > 0.0 ? true : false;
-		bool c10 = c1 && c2 && c3 && c4 && c5; 
+		bool c10 = c1 && c2 && c3 && c5; 
 
 		if (c10) {
 			TLS.set_params(width, lambda, eta_two[0], eta_one[0], eta_one[0]); 
@@ -45,10 +45,10 @@ void EIM::get_index(bool loud)
 		}
 		else {
 			std::string reason;
-			reason = "Error: void Rectangular::set_params(double W, double H, double Ncore, double Nclad, double WL)\n";
+			reason = "Error: void EIM::get_index()\n";
 			if (!c1) reason += "width: " + template_funcs::toString(width, 2) + " is not correct\n";
-			if (!c2 || c4) reason += "eta_one.size(): " + template_funcs::toString(eta_one.size(), 2) + " is not correct\n";
-			if (!c3 || c4) reason += "eta_one.two(): " + template_funcs::toString(eta_two.size(), 2) + " is not correct\n";
+			if (!c2) reason += "eta_one.size(): " + template_funcs::toString(eta_one.size(), 2) + " is not correct\n";
+			if (!c3) reason += "eta_one.two(): " + template_funcs::toString(eta_two.size(), 2) + " is not correct\n";
 			if (!c5) reason += "lambda: " + template_funcs::toString(lambda, 2) + " is not correct\n";
 			
 			throw std::invalid_argument(reason);
@@ -92,6 +92,8 @@ void Rectangular::set_params(bool polarisation, double W, double H, double Ncore
 			width = W; height = H; 
 			ncore = Ncore; nclad = Nclad; 
 			lambda = WL; 
+			eta_one.clear(); 
+			eta_two.clear(); 
 			params_defined = true; 
 		}
 		else {
@@ -134,10 +136,14 @@ void Rectangular::reduce_wg(bool loud)
 				}
 			}
 			else {
+				// No modes through the vertical section means the device is basically a TLS anyway
+				eta_one.push_back(nclad);
+				eta_two.push_back(0.5*(ncore+nclad));
+
 				std::string reason; 
 				reason = "Error: void Rectangular::reduce_wg()\n";
 				reason += "No modes computed in central vertical cross section\n"; 
-				throw std::invalid_argument(reason); 
+				throw std::runtime_error(reason); 
 			}
 		}
 		else {
@@ -151,6 +157,9 @@ void Rectangular::reduce_wg(bool loud)
 	catch (std::invalid_argument &e) {
 		useful_funcs::exit_failure_output(e.what());
 		exit(EXIT_FAILURE);
+	}
+	catch (std::runtime_error &e) {
+		std::cerr << e.what(); 
 	}
 }
 
@@ -185,6 +194,8 @@ void Wire::set_params(bool polarisation, double W, double H, double Ncore, doubl
 			width = W; height = H;
 			ncore = Ncore; nsub = Nsub; nclad = Nclad;
 			lambda = WL;
+			eta_one.clear();
+			eta_two.clear();
 			params_defined = true;
 		}
 		else {
@@ -224,14 +235,19 @@ void Wire::reduce_wg(bool loud)
 				// Store the computed effective index values in the vectors eta_one, for cladding, and eta_two, for core
 				for (int i = 0; i < TLS.get_nmodes(pol); i++) {
 					eta_one.push_back(nclad);
+					//eta_one.push_back(0.5*(nclad+nsub)); // Don't think this makes it more accurate
 					eta_two.push_back(TLS.get_neff(i, pol)); // store the reduced effective indices
 				}
 			}
 			else {
+				// No modes through the vertical section means the device is basically a TLS anyway
+				eta_one.push_back(nclad); 
+				eta_two.push_back( (ncore + nsub + nclad) / 3.0);
+
 				std::string reason;
 				reason = "Error: void Wire::reduce_wg()\n";
 				reason += "No modes computed in central vertical cross section\n";
-				throw std::invalid_argument(reason);
+				throw std::runtime_error(reason);
 			}
 		}
 		else {
@@ -245,6 +261,9 @@ void Wire::reduce_wg(bool loud)
 	catch (std::invalid_argument &e) {
 		useful_funcs::exit_failure_output(e.what());
 		exit(EXIT_FAILURE);
+	}
+	catch (std::runtime_error &e) {
+		std::cerr << e.what();
 	}
 }
 
@@ -277,9 +296,11 @@ void Rib::set_params(bool polarisation, double W, double E, double T, double Nco
 		if (c10) {
 			pol = polarisation;
 			not_pol = !pol;
-			width = W; etch_depth = E; slab_height = T; 
+			width = W; etch_depth = E; slab_height = T; core_height = etch_depth + slab_height; 
 			ncore = Ncore; nsub = Nsub; nclad = Nclad;
 			lambda = WL;
+			eta_one.clear();
+			eta_two.clear();
 			params_defined = true;
 		}
 		else {
@@ -304,7 +325,71 @@ void Rib::set_params(bool polarisation, double W, double E, double T, double Nco
 
 void Rib::reduce_wg(bool loud)
 {
-	
+	// reduce the 2D structure to two 1D structures
+
+	try {
+		if (params_defined) {
+			//Step One: Eff Index along the vertical though the slab
+
+			TLS.set_params(slab_height, lambda, ncore, nsub, nclad); // assign the parameters for the calculation
+
+			TLS.neff_search(pol); // find the reduced effective index through the core
+
+			if (loud) TLS.report(pol);
+
+			if (TLS.get_nmodes(pol) > 0) {
+				// Store the computed effective index values in the vectors eta_one, for slab, and eta_two, for core
+				for (int i = 0; i < TLS.get_nmodes(pol); i++) {
+					eta_one.push_back(TLS.get_neff(i, pol)); // store the reduced effective indices
+				}
+			}
+			else {
+				eta_one.push_back(nclad); 
+
+				std::string reason;
+				reason = "Error: void Rib::reduce_wg()\n";
+				reason += "No modes computed in slab vertical cross section\n";
+				throw std::runtime_error(reason);
+			}
+
+			//Step Two: Eff Index along the vertical though the core
+
+			TLS.set_params(core_height, lambda, ncore, nsub, nclad); // assign the parameters for the calculation
+
+			TLS.neff_search(pol); // find the reduced effective index through the core
+
+			if (loud) TLS.report(pol);
+
+			if (TLS.get_nmodes(pol) > 0) {
+				// Store the computed effective index values in the vectors eta_one, for slab, and eta_two, for core
+				for (int i = 0; i < TLS.get_nmodes(pol); i++) {
+					eta_two.push_back(TLS.get_neff(i, pol)); // store the reduced effective indices
+				}
+			}
+			else {
+				eta_two.push_back((ncore + nsub + nclad)/3.0); 
+
+				std::string reason;
+				reason = "Error: void Rib::reduce_wg()\n";
+				reason += "No modes computed in central vertical cross section\n";
+				throw std::runtime_error(reason);
+			}
+		}
+		else {
+			std::string reason;
+			reason = "Error: void Rib::reduce_wg()\n";
+			reason += "Device parameters not defined\n";
+
+			throw std::invalid_argument(reason);
+		}
+	}
+	catch (std::invalid_argument &e) {
+		useful_funcs::exit_failure_output(e.what());
+		exit(EXIT_FAILURE);
+	}
+	catch (std::runtime_error &e) {
+		std::cerr << e.what();
+	}
 }
 
 // Ridge Derived Class Definition
@@ -341,6 +426,8 @@ void Shallow_Ridge::set_params(bool polarisation, double W, double E, double T, 
 			width = W; etch_depth = E; slab_height = T; core_height = D; 
 			ncore = Ncore; nsub = Nsub; nrib = Nrib; nclad = Nclad;
 			lambda = WL;
+			eta_one.clear();
+			eta_two.clear();
 			params_defined = true;
 		}
 		else {
@@ -367,5 +454,68 @@ void Shallow_Ridge::set_params(bool polarisation, double W, double E, double T, 
 
 void Shallow_Ridge::reduce_wg(bool loud)
 {
+	// reduce the 2D structure to two 1D structures
 
+	try {
+		if (params_defined) {
+			//Step One: Eff Index along the vertical though the slab
+			FLS.set_params(core_height, slab_height, lambda, ncore, nsub, nclad, nrib);
+			
+			FLS.neff_search(pol); 
+			
+			if (loud) FLS.report(pol);	
+
+			if (FLS.get_nmodes(pol) > 0) {
+				// Store the computed effective index values in the vectors eta_one, for slab, and eta_two, for core
+				for (int i = 0; i < FLS.get_nmodes(pol); i++) {
+					eta_one.push_back(FLS.get_neff(i, pol)); // store the reduced effective indices
+				}
+			}
+			else {
+				eta_one.push_back(nclad);
+
+				std::string reason;
+				reason = "Error: void Shallow_Ridge::reduce_wg()\n";
+				reason += "No modes computed in slab vertical cross section\n";
+				throw std::runtime_error(reason);
+			}
+
+			//Step Two: Eff Index along the vertical though the core
+
+			FLS.set_params(core_height, slab_height + etch_depth, lambda, ncore, nsub, nclad, nrib);
+
+			FLS.neff_search(pol);
+
+			if (loud) FLS.report(pol);
+
+			if (FLS.get_nmodes(pol) > 0) {
+				// Store the computed effective index values in the vectors eta_one, for slab, and eta_two, for core
+				for (int i = 0; i < FLS.get_nmodes(pol); i++) {
+					eta_two.push_back(FLS.get_neff(i, pol)); // store the reduced effective indices
+				}
+			}
+			else {
+				eta_two.push_back((nclad+nrib+ncore+nsub)/4.0);
+
+				std::string reason;
+				reason = "Error: void Shallow_Ridge::reduce_wg()\n";
+				reason += "No modes computed in central vertical cross section\n";
+				throw std::runtime_error(reason);
+			}
+		}
+		else {
+			std::string reason;
+			reason = "Error: void Shallow_Ridge::reduce_wg()\n";
+			reason += "Device parameters not defined\n";
+
+			throw std::invalid_argument(reason);
+		}
+	}
+	catch (std::invalid_argument &e) {
+		useful_funcs::exit_failure_output(e.what());
+		exit(EXIT_FAILURE);
+	}
+	catch (std::runtime_error &e) {
+		std::cerr << e.what();
+	}
 }
