@@ -160,7 +160,7 @@ void testing::eim_ridge_wg()
 
 	wguide.set_params(polarisation, W, E, T, D, ncore, nsub, nrib, nclad, WL);
 
-	wguide.reduce_wg(true);
+	wguide.reduce_wg();
 
 	wguide.get_index(true);
 }
