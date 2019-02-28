@@ -20,6 +20,8 @@ namespace testing {
 
 	void eim_ridge_wg(); 
 
+	void eim_arb_wg(); 
+
 }
 
 #endif

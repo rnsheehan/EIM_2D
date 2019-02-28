@@ -76,19 +76,9 @@ void testing::eim_rect_wg()
 	W = 2; H = 1; 
 	nc = 3.38; ncl = 3.17; 
 
-	wg_dims dim; 
-
-	dim.set_rect_wire(W, H); 
-
-	ri_vals ri; 
-
-	ri.set_rect(nc, ncl, WL); 
-
 	Rectangular wguide; 
 
-	//wguide.set_params(polarisation, W, H, nc, ncl, WL);
-
-	wguide.set_params(polarisation, dim, ri); 
+	wguide.set_params(polarisation, W, H, nc, ncl, WL); 
 
 	wguide.reduce_wg(); 
 
@@ -121,19 +111,9 @@ void testing::eim_wire_wg()
 	W = 0.45; H = 0.22; 
 	nc = 3.45; ns = 1.45; ncl = 1.0; 
 
-	wg_dims dim;
-
-	dim.set_rect_wire(W, H);
-
-	ri_vals ri;
-
-	ri.set_rib_wire(nc, ns, ncl, WL);
-
 	Wire wguide;
 
-	//wguide.set_params(polarisation, W, H, nc, ns, ncl, WL);
-
-	wguide.set_params(polarisation, dim, ri); 
+	wguide.set_params(polarisation, W, H, nc, ns, ncl, WL);
 
 	wguide.reduce_wg();
 
@@ -155,18 +135,9 @@ void testing::eim_rib_wg()
 	W = 2.0; E = 0.5; T = 0.5; WL = 1.55; // neff = 3.265 for TM -> TE, neff = 3.269 for TE calc online
 	ncore = 3.38; nsub = 3.17; nclad = 1.0; // neff = 3.281 for TE -> TM, neff = 3.257 for TM calc online
 
-	wg_dims dim;
-
-	dim.set_rib(W, E, T);
-
-	ri_vals ri;
-
-	ri.set_rib_wire(ncore, nsub, nclad, WL);
-
 	Rib wguide; 
 
-	//wguide.set_params(polarisation, W, E, T, ncore, nsub, nclad, WL); 
-	wguide.set_params(polarisation, dim, ri); 
+	wguide.set_params(polarisation, W, E, T, ncore, nsub, nclad, WL); 
 
 	wguide.reduce_wg(); 
 
@@ -185,53 +156,11 @@ void testing::eim_ridge_wg()
 	W = 2.0; D = 0.6; E = 0.5; T = 0.4; WL = 1.55; // neff = 3.292 for TM -> TE, neff = 3.295 for TE calc online
 	ncore = 3.38; nsub = nrib = 3.17; nclad = 1.0; 
 
-	wg_dims dim;
-
-	dim.set_ridge(W, E, T, D);
-
-	ri_vals ri;
-
-	ri.set_ridge(ncore, nsub, nrib, nclad, WL);
-
 	Shallow_Ridge wguide;
 
-	wguide.set_params(polarisation, dim, ri);
+	wguide.set_params(polarisation, W, E, T, D, ncore, nsub, nrib, nclad, WL);
 
 	wguide.reduce_wg();
 
 	wguide.get_index(true);
-}
-
-void testing::eim_arb_wg()
-{
-	// Perform an EIM calculation using the EIM base class
-	// R. Sheehan 28 - 2 - 2019
-
-	bool polarisation = TM;
-
-	double W, E, T, ncore, nsub, nclad, WL;
-
-	W = 1.5; E = 0.3; T = 0.45; WL = 1.55; // neff = 3.265 for TM -> TE, neff = 3.269 for TE calc online
-	ncore = 3.38; nsub = 3.17; nclad = 1.0; // neff = 3.281 for TE -> TM, neff = 3.257 for TM calc online
-
-	//W = 2.0; E = 0.5; T = 0.5; WL = 1.55; // neff = 3.265 for TM -> TE, neff = 3.269 for TE calc online
-	//ncore = 3.38; nsub = 3.17; nclad = 1.0; // neff = 3.281 for TE -> TM, neff = 3.257 for TM calc online
-
-	wg_dims dim;
-
-	dim.set_rib(W, E, T);
-
-	ri_vals ri;
-
-	ri.set_rib_wire(ncore, nsub, nclad, WL);
-
-	Rib wguide; 
-
-	EIM *compute = &wguide; 
-
-	compute->set_params(polarisation, dim, ri); 
-
-	compute->reduce_wg(); 
-
-	compute->get_index(true); 
 }

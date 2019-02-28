@@ -18,7 +18,9 @@ int main(int argc, char *argv[])
 
 	//testing::eim_rib_wg(); 
 
-	testing::eim_ridge_wg(); 
+	//testing::eim_ridge_wg(); 
+
+	testing::eim_arb_wg(); 
 
 	std::cout<<"Press enter to close console\n";
 	std::cin.get(); 

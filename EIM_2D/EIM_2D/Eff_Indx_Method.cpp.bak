@@ -4,6 +4,219 @@
 
 // Definition of the methods declared in Eff_Indx_Method.h
 
+// Definition of wg_dims class
+wg_dims::wg_dims()
+{
+	// Default Constructor
+	params_defined = false; 
+	width = height = etch_depth = slab_height = core_height = 0.0; 
+}
+
+wg_dims::wg_dims(wg_dims &obj)
+{
+	// Copy Constructor
+	*this = obj; 
+}
+
+void wg_dims::set_rect_wire(double W, double H)
+{
+	// assign the values of the rect / wire waveguide dimensions
+
+	try {
+		bool c1 = W > 0.0 ? true : false;
+		bool c2 = H > 0.0 ? true : false;
+		bool c10 = c1 && c2;
+
+		if (c10) {
+			width = W; etch_depth = 0.0; slab_height = 0.0; core_height = H;
+			params_defined = true; 
+		}
+		else {
+			std::string reason;
+			reason = "Error: void wg_dims::set_rect_wire(double W, double H)\n";
+			if (!c1) reason += "W: " + template_funcs::toString(W, 2) + " is not correct\n";
+			if (!c2) reason += "H: " + template_funcs::toString(H, 2) + " is not correct\n";
+			
+			throw std::invalid_argument(reason);
+		}
+	}
+	catch (std::invalid_argument &e) {
+		useful_funcs::exit_failure_output(e.what());
+		exit(EXIT_FAILURE);
+	}
+}
+
+void wg_dims::set_rib(double W, double E, double T)
+{
+	// assign the values of the rib waveguide dimensions
+
+	try {
+		bool c1 = W > 0.0 ? true : false;
+		bool c2 = E > 0.0 ? true : false;
+		bool c3 = T > 0.0 ? true : false;
+		bool c10 = c1 && c2 && c3;
+
+		if (c10) {
+			width = W; etch_depth = E; slab_height = T; core_height = E + T;
+			params_defined = true;
+		}
+		else {
+			std::string reason;
+			reason = "Error: void wg_dims::set_rib(double W, double E, double T)\n";
+			if (!c1) reason += "W: " + template_funcs::toString(W, 2) + " is not correct\n";
+			if (!c2) reason += "E: " + template_funcs::toString(E, 2) + " is not correct\n";
+			if (!c3) reason += "T: " + template_funcs::toString(T, 2) + " is not correct\n";
+
+			throw std::invalid_argument(reason);
+		}
+	}
+	catch (std::invalid_argument &e) {
+		useful_funcs::exit_failure_output(e.what());
+		exit(EXIT_FAILURE);
+	}
+}
+
+void wg_dims::set_ridge(double W, double E, double T, double D)
+{
+	// assign the values of the ridge waveguide dimensions
+
+	try {
+		bool c1 = W > 0.0 ? true : false;
+		bool c2 = E > 0.0 ? true : false;
+		bool c3 = T > 0.0 ? true : false;
+		bool c4 = D > 0.0 ? true : false;
+		bool c10 = c1 && c2 && c3 && c4; 
+
+		if (c10) {
+			width = W; etch_depth = E; slab_height = T; core_height = D;
+		}
+		else {
+			std::string reason;
+			reason = "Error: void wg_dims::set_ridge(double W, double E, double T, double D)\n";
+			if (!c1) reason += "W: " + template_funcs::toString(W, 2) + " is not correct\n";
+			if (!c2) reason += "E: " + template_funcs::toString(E, 2) + " is not correct\n";
+			if (!c3) reason += "T: " + template_funcs::toString(T, 2) + " is not correct\n";
+			if (!c4) reason += "D: " + template_funcs::toString(D, 2) + " is not correct\n";
+			
+			throw std::invalid_argument(reason);
+		}
+	}
+	catch (std::invalid_argument &e) {
+		useful_funcs::exit_failure_output(e.what());
+		exit(EXIT_FAILURE);
+	}
+}
+
+/// Definition of ri_vals class
+ri_vals::ri_vals()
+{
+	// Default Constructor
+	params_defined = false;
+	ncore = nsub = nrib = nclad = lambda = 0.0; 
+}
+
+ri_vals::ri_vals(ri_vals &obj)
+{
+	// Copy Constructor
+	*this = obj; 
+}
+
+void ri_vals::set_rect(double Ncore, double Nclad, double WL)
+{
+	// Assign the RI values for a rect wg
+
+	try {
+		bool c1 = Ncore > Nclad ? true : false;
+		bool c2 = Nclad > 0.0 ? true : false;
+		bool c3 = WL > 0.0 ? true : false;
+		bool c10 = c1 && c2 && c3;
+
+		if (c10) {
+			ncore = Ncore; nsub = 0.0; nrib = 0.0; nclad = Nclad; lambda = WL; 
+			params_defined = true;
+		}
+		else {
+			std::string reason;
+			reason = "Error: void ri_vals::set_rect(double Ncore, double Nclad, double WL)\n";
+			if (!c1) reason += "Ncore: " + template_funcs::toString(Ncore, 2) + " is not correct\n";
+			if (!c2) reason += "Nclad: " + template_funcs::toString(Nclad, 2) + " is not correct\n";
+			if (!c3) reason += "WL: " + template_funcs::toString(WL, 2) + " is not correct\n";
+
+			throw std::invalid_argument(reason);
+		}
+	}
+	catch (std::invalid_argument &e) {
+		useful_funcs::exit_failure_output(e.what());
+		exit(EXIT_FAILURE);
+	}
+}
+
+void ri_vals::set_rib_wire(double Ncore, double Nsub, double Nclad, double WL)
+{
+	// Assign the RI values for a rib / wire waveguide
+
+	try {
+		bool c1 = Ncore > Nsub ? true : false;
+		bool c2 = Nsub > Nclad ? true : false;
+		bool c3 = Nclad > 0.0 ? true : false;
+		bool c4 = WL > 0.0 ? true : false;
+		bool c10 = c1 && c2 && c3 && c4;
+
+		if (c10) {
+			ncore = Ncore; nsub = Nsub; nrib = 0.0; nclad = Nclad; lambda = WL; 
+			params_defined = true;
+		}
+		else {
+			std::string reason;
+			reason = "Error: void ri_vals::set_rib_wire(double Ncore, double Nsub, double Nclad)\n";
+			if (!c1) reason += "Ncore: " + template_funcs::toString(Ncore, 2) + " is not correct\n";
+			if (!c2) reason += "Nsub: " + template_funcs::toString(Nsub, 2) + " is not correct\n";
+			if (!c3) reason += "Nclad: " + template_funcs::toString(Nclad, 2) + " is not correct\n";
+			if (!c4) reason += "WL: " + template_funcs::toString(WL, 2) + " is not correct\n";
+
+			throw std::invalid_argument(reason);
+		}
+	}
+	catch (std::invalid_argument &e) {
+		useful_funcs::exit_failure_output(e.what());
+		exit(EXIT_FAILURE);
+	}
+}
+
+void ri_vals::set_ridge(double Ncore, double Nsub, double Nrib, double Nclad, double WL)
+{
+	// Assign the RI values for a ridge waveguide
+
+	try {
+		bool c1 = Ncore > Nrib ? true : false;
+		bool c2 = Nsub > Nclad ? true : false;
+		bool c3 = Nrib > Nclad ? true : false;
+		bool c4 = Nclad > 0.0 ? true : false;
+		bool c5 = WL > 0.0 ? true : false;
+		bool c10 = c1 && c2 && c3 && c4 && c5; 
+
+		if (c10) {
+			ncore = Ncore; nsub = Nsub; nrib = Nrib; nclad = Nclad; 
+			params_defined = true;
+		}
+		else {
+			std::string reason;
+			reason = "Error: void ri_vals::set_ridge(double Ncore, double Nsub, double Nrib, double Nclad)\n";
+			if (!c1) reason += "Ncore: " + template_funcs::toString(Ncore, 2) + " is not correct\n";
+			if (!c2) reason += "Nsub: " + template_funcs::toString(Nsub, 2) + " is not correct\n";
+			if (!c3) reason += "Nrib: " + template_funcs::toString(Nrib, 2) + " is not correct\n";
+			if (!c4) reason += "Nclad: " + template_funcs::toString(Nclad, 2) + " is not correct\n";
+			if (!c5) reason += "WL: " + template_funcs::toString(WL, 2) + " is not correct\n";
+
+			throw std::invalid_argument(reason);
+		}
+	}
+	catch (std::invalid_argument &e) {
+		useful_funcs::exit_failure_output(e.what());
+		exit(EXIT_FAILURE);
+	}
+}
+
 // EIM Base Class Definition
 
 EIM::EIM()
@@ -60,6 +273,12 @@ void EIM::get_index(bool loud)
 	}
 }
 
+void EIM::set_params(bool, wg_dims &, ri_vals &)
+{
+	// Non-pure virtual function for the set_params function
+	// Does nothing
+}
+
 // Rectangular Derived Class Definition
 Rectangular::Rectangular()
 {
@@ -71,6 +290,11 @@ Rectangular::Rectangular(bool polarisation, double W, double H, double Ncore, do
 	// Primary Constructor
 
 	set_params(polarisation, W, H, Ncore, Nclad, WL); 
+}
+
+void Rectangular::set_params()
+{
+	
 }
 
 void Rectangular::set_params(bool polarisation, double W, double H, double Ncore, double Nclad, double WL)
@@ -89,11 +313,19 @@ void Rectangular::set_params(bool polarisation, double W, double H, double Ncore
 		if (c10) {
 			pol = polarisation; 
 			not_pol = !pol; 
+
 			width = W; height = H; 
+			
 			ncore = Ncore; nclad = Nclad; 
 			lambda = WL; 
+
+			dimensions.set_rect_wire(W, H); 
+
+			ref_indx.set_rect(Ncore, Nclad, WL); 
+
 			eta_one.clear(); 
 			eta_two.clear(); 
+
 			params_defined = true; 
 		}
 		else {
@@ -114,7 +346,12 @@ void Rectangular::set_params(bool polarisation, double W, double H, double Ncore
 	}
 }
 
-void Rectangular::reduce_wg(bool loud)
+void Rectangular::set_params(bool, wg_dims &, ri_vals &)
+{
+	// Non-pure virtual function for the set_params function
+}
+
+void Rectangular::reduce_wg()
 {
 	// reduce the 2D structure to two 1D structures
 
@@ -126,7 +363,7 @@ void Rectangular::reduce_wg(bool loud)
 
 			TLS.neff_search(pol); // find the reduced effective index through the core
 
-			if(loud) TLS.report(pol); 
+			//if(loud) TLS.report(pol); 
 
 			if (TLS.get_nmodes(pol) > 0) {
 				// Store the computed effective index values in the vectors eta_one, for cladding, and eta_two, for core
@@ -174,6 +411,11 @@ Wire::Wire(bool polarisation, double W, double H, double Ncore, double Nsub, dou
 	set_params(polarisation, W, H, Ncore, Nsub, Nclad, WL);
 }
 
+void Wire::set_params()
+{
+
+}
+
 void Wire::set_params(bool polarisation, double W, double H, double Ncore, double Nsub, double Nclad, double WL)
 {
 	// Assign values to the parameters of the rib waveguide class
@@ -194,6 +436,11 @@ void Wire::set_params(bool polarisation, double W, double H, double Ncore, doubl
 			width = W; height = H;
 			ncore = Ncore; nsub = Nsub; nclad = Nclad;
 			lambda = WL;
+
+			dimensions.set_rect_wire(W, H); 
+
+			ref_indx.set_rib_wire(Ncore, Nsub, Nclad, WL); 
+
 			eta_one.clear();
 			eta_two.clear();
 			params_defined = true;
@@ -217,7 +464,12 @@ void Wire::set_params(bool polarisation, double W, double H, double Ncore, doubl
 	}
 }
 
-void Wire::reduce_wg(bool loud)
+void Wire::set_params(bool, wg_dims &, ri_vals &)
+{
+	// Non-pure virtual function for the set_params function
+}
+
+void Wire::reduce_wg()
 {
 	// reduce the 2D structure to two 1D structures
 
@@ -229,7 +481,7 @@ void Wire::reduce_wg(bool loud)
 
 			TLS.neff_search(pol); // find the reduced effective index through the core
 
-			if (loud) TLS.report(pol);
+			//if (loud) TLS.report(pol);
 
 			if (TLS.get_nmodes(pol) > 0) {
 				// Store the computed effective index values in the vectors eta_one, for cladding, and eta_two, for core
@@ -278,6 +530,11 @@ Rib::Rib(bool polarisation, double W, double E, double T, double Ncore, double N
 	set_params(polarisation, W, E, T, Ncore, Nsub, Nclad, WL); 
 }
 
+void Rib::set_params()
+{
+
+}
+
 void Rib::set_params(bool polarisation, double W, double E, double T, double Ncore, double Nsub, double Nclad, double WL)
 {
 	// Assign values to the parameters of the rib waveguide class
@@ -299,6 +556,11 @@ void Rib::set_params(bool polarisation, double W, double E, double T, double Nco
 			width = W; etch_depth = E; slab_height = T; core_height = etch_depth + slab_height; 
 			ncore = Ncore; nsub = Nsub; nclad = Nclad;
 			lambda = WL;
+
+			dimensions.set_rib(W, E, T); 
+
+			ref_indx.set_rib_wire(Ncore, Nsub, Nclad, WL); 
+
 			eta_one.clear();
 			eta_two.clear();
 			params_defined = true;
@@ -323,7 +585,12 @@ void Rib::set_params(bool polarisation, double W, double E, double T, double Nco
 	}
 }
 
-void Rib::reduce_wg(bool loud)
+void Rib::set_params(bool, wg_dims &, ri_vals &)
+{
+	// Non-pure virtual function for the set_params function
+}
+
+void Rib::reduce_wg()
 {
 	// reduce the 2D structure to two 1D structures
 
@@ -335,7 +602,7 @@ void Rib::reduce_wg(bool loud)
 
 			TLS.neff_search(pol); // find the reduced effective index through the core
 
-			if (loud) TLS.report(pol);
+			//if (loud) TLS.report(pol);
 
 			if (TLS.get_nmodes(pol) > 0) {
 				// Store the computed effective index values in the vectors eta_one, for slab, and eta_two, for core
@@ -358,7 +625,7 @@ void Rib::reduce_wg(bool loud)
 
 			TLS.neff_search(pol); // find the reduced effective index through the core
 
-			if (loud) TLS.report(pol);
+			//if (loud) TLS.report(pol);
 
 			if (TLS.get_nmodes(pol) > 0) {
 				// Store the computed effective index values in the vectors eta_one, for slab, and eta_two, for core
@@ -403,6 +670,11 @@ Shallow_Ridge::Shallow_Ridge(bool polarisation, double W, double E, double T, do
 	set_params(polarisation, W, E, T, D, Ncore, Nsub, Nrib, Nclad, WL);
 }
 
+void Shallow_Ridge::set_params()
+{
+
+}
+
 void Shallow_Ridge::set_params(bool polarisation, double W, double E, double T, double D, double Ncore, double Nsub, double Nrib, double Nclad, double WL)
 {
 	// Assign values to the parameters of the shallow ridge waveguide class
@@ -426,6 +698,11 @@ void Shallow_Ridge::set_params(bool polarisation, double W, double E, double T, 
 			width = W; etch_depth = E; slab_height = T; core_height = D; 
 			ncore = Ncore; nsub = Nsub; nrib = Nrib; nclad = Nclad;
 			lambda = WL;
+
+			dimensions.set_ridge(W, E, T, D); 
+
+			ref_indx.set_ridge(Ncore, Nsub, Nrib, Nclad, WL); 
+
 			eta_one.clear();
 			eta_two.clear();
 			params_defined = true;
@@ -452,7 +729,12 @@ void Shallow_Ridge::set_params(bool polarisation, double W, double E, double T, 
 	}
 }
 
-void Shallow_Ridge::reduce_wg(bool loud)
+void Shallow_Ridge::set_params(bool, wg_dims &, ri_vals &)
+{
+	// Non-pure virtual function for the set_params function
+}
+
+void Shallow_Ridge::reduce_wg()
 {
 	// reduce the 2D structure to two 1D structures
 
@@ -463,7 +745,7 @@ void Shallow_Ridge::reduce_wg(bool loud)
 			
 			FLS.neff_search(pol); 
 			
-			if (loud) FLS.report(pol);	
+			//if (loud) FLS.report(pol);	
 
 			if (FLS.get_nmodes(pol) > 0) {
 				// Store the computed effective index values in the vectors eta_one, for slab, and eta_two, for core
@@ -486,7 +768,7 @@ void Shallow_Ridge::reduce_wg(bool loud)
 
 			FLS.neff_search(pol);
 
-			if (loud) FLS.report(pol);
+			//if (loud) FLS.report(pol);
 
 			if (FLS.get_nmodes(pol) > 0) {
 				// Store the computed effective index values in the vectors eta_one, for slab, and eta_two, for core

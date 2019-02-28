@@ -1,7 +1,7 @@
 Program Exit Explanation
 
-Error occurred: Thu Feb 21 13:38:35 2019
+Error occurred: Thu Feb 28 14:16:43 2019
 
-Error: void EIM::get_index()
-eta_one.two(): 0 is not correct
+Error: void Shallow_Ridge::set_params(bool polarisation, wg_dims &dim_obj, ri_vals &ri_obj)
+WL: 0.00 is not correct
 

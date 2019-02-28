@@ -12,6 +12,64 @@
 // by all derived classes. Each derived class will have an instance of the function reduce_wg which will reduce the 2D WG structure
 // to an equivalent three layer slab structure
 
+class wg_dims {
+public:
+	wg_dims();
+	wg_dims(wg_dims &obj); 
+
+	void set_rect_wire(double W, double H);
+	void set_rib(double W, double E, double T);
+	void set_ridge(double W, double E, double T, double D);
+
+	// getters
+	inline bool params_set() { return params_defined; }
+
+	inline double get_W() { return width;  }
+	inline double get_H() { return height; }
+	inline double get_E() { return etch_depth; }
+	inline double get_T() { return slab_height; }
+	inline double get_D() { return core_height; }
+
+private:
+	bool params_defined; 
+
+	// Waveguide Dimensions
+	double width; // W rib / ridge width in units of um
+	double height; // H total height in units of um
+	double etch_depth; // E rib / ridge etch depth in units of um
+	double slab_height; // T rib / ridge slab height in units of um
+	double core_height; // D ridge core layer thickness in units of um
+};
+
+class ri_vals {
+public: 
+	ri_vals();
+
+	ri_vals(ri_vals &obj); 
+
+	void set_rect(double Ncore, double Nclad, double WL);
+	void set_rib_wire(double Ncore, double Nsub, double Nclad, double WL);
+	void set_ridge(double Ncore, double Nsub, double Nrib, double Nclad, double WL);
+
+	// getters
+	inline bool params_set() { return params_defined;  }
+	inline double get_Ncore() { return ncore; }
+	inline double get_Nsub() { return nsub; }
+	inline double get_Nrib() { return nrib; }
+	inline double get_Nclad() { return nclad; }
+	inline double get_WL() { return lambda;  }
+
+private:
+	bool params_defined; 
+	// Waveguide refractive indices
+	double ncore; // core RI
+	double nsub; // substrate RI
+	double nrib; // rib RI
+	double nclad; // claddin RI
+
+	double lambda; // Wavelength in units of um
+};
+
 class EIM
 {
 public:
@@ -22,9 +80,12 @@ public:
 	// since each derived class requires a different number of parameters, best just to have set_params declared and defined
 	// in each derived class
 
-	//virtual void reduce_wg() = 0; // each derived class will reduce 2D - 1D slightly differently, don't really need this
+	virtual void reduce_wg() = 0; // each derived class will reduce 2D - 1D slightly differently
+	virtual void set_params() = 0; 
 
-	void get_index(bool loud = false); // compute the effective index of the 2D structure
+	virtual void set_params(bool, wg_dims &, ri_vals &);
+
+	void get_index(bool loud); // compute the effective index of the 2D structure
 
 	// setters
 	/*inline void set_W(double &val) { width = val;  }
@@ -39,18 +100,6 @@ public:
 	inline void set_Nclad(double &val) { nclad = val; }
 	
 	inline void set_WL(double &val) { lambda = val; }*/
-
-	// getters
-	/*inline double get_W() { return width;  }
-	inline double get_H() { return height; }
-	inline double get_E() { return etch_depth; }
-	inline double get_T() { return slab_height; }
-	inline double get_D() { return core_height; }
-
-	inline double get_Ncore() { return ncore; }
-	inline double get_Nsub() { return nsub; }
-	inline double get_Nrib() { return nrib; }
-	inline double get_Nclad() { return nclad; }*/
 
 protected:
 	bool pol; // polarisation
@@ -72,6 +121,10 @@ protected:
 
 	double lambda; // Wavelength in units of um
 
+	wg_dims dimensions; 
+
+	ri_vals ref_indx; 
+
 	// vectors to hold the reduced index values for the side-slab and the core region
 	std::vector<double> eta_one; 
 	std::vector<double> eta_two; 
@@ -88,9 +141,11 @@ public:
 
 	Rectangular(bool polarisation, double W, double H, double Ncore, double Nclad, double WL); 
 
+	void set_params(); 
 	void set_params(bool polarisation, double W, double H, double Ncore, double Nclad, double WL);
-
-	void reduce_wg(bool loud = false); 
+	void set_params(bool, wg_dims &, ri_vals &); 
+ 
+	void reduce_wg(); 
 };
 
 class Wire : public EIM
@@ -100,9 +155,11 @@ public:
 
 	Wire(bool polarisation, double W, double H, double Ncore, double Nsub, double Nclad, double WL);
 
+	void set_params();
 	void set_params(bool polarisation, double W, double H, double Ncore, double Nsub, double Nclad, double WL);
+	void set_params(bool, wg_dims &, ri_vals &); 
 
-	void reduce_wg(bool loud = false);
+	void reduce_wg();
 };
 
 class Rib : public EIM
@@ -112,9 +169,11 @@ public:
 
 	Rib(bool polarisation, double W, double E, double T, double Ncore, double Nsub, double Nclad, double WL); 
 
+	void set_params();
 	void set_params(bool polarisation, double W, double E, double T, double Ncore, double Nsub, double Nclad, double WL);
+	void set_params(bool, wg_dims &, ri_vals &); 
 
-	void reduce_wg(bool loud = false); 
+	void reduce_wg(); 
 };
 
 class Shallow_Ridge : public EIM
@@ -124,9 +183,11 @@ public:
 
 	Shallow_Ridge(bool polarisation, double W, double E, double T, double D, double Ncore, double Nsub, double Nrib, double Nclad, double WL);
 
+	void set_params();
 	void set_params(bool polarisation, double W, double E, double T, double D, double Ncore, double Nsub, double Nrib, double Nclad, double WL);
+	void set_params(bool, wg_dims &, ri_vals &); 
 
-	void reduce_wg(bool loud = false);
+	void reduce_wg();
 };
 
 #endif
