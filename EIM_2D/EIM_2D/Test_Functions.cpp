@@ -171,6 +171,15 @@ void testing::eim_rib_wg()
 	wguide.reduce_wg(); 
 
 	wguide.get_index(true); 
+
+	double separ = 0.25; 
+	std::cout << separ << " , " << wguide.coupling_coefficient(separ) << "\n";
+	separ = 0.5;
+	std::cout << separ << " , " << wguide.coupling_coefficient(separ) << "\n";
+	separ = 1.0; 
+	std::cout << separ << " , " << wguide.coupling_coefficient(separ) << "\n";
+	separ = 2.0;
+	std::cout << separ << " , " << wguide.coupling_coefficient(separ) << "\n";
 }
 
 void testing::eim_ridge_wg()

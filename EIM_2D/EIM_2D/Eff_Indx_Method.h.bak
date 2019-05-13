@@ -12,10 +12,17 @@
 // by all derived classes. Each derived class will have an instance of the function reduce_wg which will reduce the 2D WG structure
 // to an equivalent three layer slab structure
 
+// You should be able to reduce the number of set_params methods for the derived classes to a single method defined in EIM base class
+// Although it may be better to have them defined explicitly for the derived classes so that each calculation in reduce_wg is correctly
+// defined. Otherwise you need to have special cases for each of the different waveguides, and that defeats the purpose of using dynamic binding
+// Sticking with the multiple set_params methods!s
+
 class wg_dims {
 public:
 	wg_dims();
 	wg_dims(wg_dims &obj); 
+
+	void set_dims(wg_dims &obj); 
 
 	void set_rect_wire(double W, double H);
 	void set_rib(double W, double E, double T);
@@ -46,6 +53,8 @@ public:
 	ri_vals();
 
 	ri_vals(ri_vals &obj); 
+
+	void set_ri(ri_vals &obj);
 
 	void set_rect(double Ncore, double Nclad, double WL);
 	void set_rib_wire(double Ncore, double Nsub, double Nclad, double WL);
@@ -83,9 +92,11 @@ public:
 	virtual void reduce_wg() = 0; // each derived class will reduce 2D - 1D slightly differently
 	virtual void set_params() = 0; 
 
-	virtual void set_params(bool, wg_dims &, ri_vals &);
+	virtual void set_params(bool polarisation, wg_dims &, ri_vals &);
 
 	void get_index(bool loud); // compute the effective index of the 2D structure
+
+	double neff_value(); // return the effective index of the fundamental mode
 
 	// setters
 	/*inline void set_W(double &val) { width = val;  }
@@ -121,7 +132,7 @@ protected:
 
 	double lambda; // Wavelength in units of um
 
-	wg_dims dimensions; 
+	wg_dims dimensions; // Object for accessing all waveguide dimension parameters
 
 	ri_vals ref_indx; 
 
@@ -139,11 +150,11 @@ class Rectangular : public EIM
 public:
 	Rectangular(); 
 
-	Rectangular(bool polarisation, double W, double H, double Ncore, double Nclad, double WL); 
+	Rectangular(bool polarisation, wg_dims &dim_obj, ri_vals &ri_obj);
 
 	void set_params(); 
-	void set_params(bool polarisation, double W, double H, double Ncore, double Nclad, double WL);
-	void set_params(bool, wg_dims &, ri_vals &); 
+	//void set_params(bool polarisation, double W, double H, double Ncore, double Nclad, double WL);
+	void set_params(bool polarisation, wg_dims &dim_obj, ri_vals &ri_obj);
  
 	void reduce_wg(); 
 };
@@ -153,11 +164,11 @@ class Wire : public EIM
 public:
 	Wire();
 
-	Wire(bool polarisation, double W, double H, double Ncore, double Nsub, double Nclad, double WL);
+	Wire(bool polarisation, wg_dims &dim_obj, ri_vals &ri_obj);
 
 	void set_params();
-	void set_params(bool polarisation, double W, double H, double Ncore, double Nsub, double Nclad, double WL);
-	void set_params(bool, wg_dims &, ri_vals &); 
+	//void set_params(bool polarisation, double W, double H, double Ncore, double Nsub, double Nclad, double WL);
+	void set_params(bool polarisation, wg_dims &dim_obj, ri_vals &ri_obj);
 
 	void reduce_wg();
 };
@@ -167,11 +178,11 @@ class Rib : public EIM
 public:
 	Rib(); 
 
-	Rib(bool polarisation, double W, double E, double T, double Ncore, double Nsub, double Nclad, double WL); 
+	Rib(bool polarisation, wg_dims &dim_obj, ri_vals &ri_obj);
 
 	void set_params();
-	void set_params(bool polarisation, double W, double E, double T, double Ncore, double Nsub, double Nclad, double WL);
-	void set_params(bool, wg_dims &, ri_vals &); 
+	//void set_params(bool polarisation, double W, double E, double T, double Ncore, double Nsub, double Nclad, double WL);
+	void set_params(bool polarisation, wg_dims &dim_obj, ri_vals &ri_obj);
 
 	void reduce_wg(); 
 };
@@ -181,11 +192,11 @@ class Shallow_Ridge : public EIM
 public:
 	Shallow_Ridge();
 
-	Shallow_Ridge(bool polarisation, double W, double E, double T, double D, double Ncore, double Nsub, double Nrib, double Nclad, double WL);
+	Shallow_Ridge(bool polarisation, wg_dims &dim_obj, ri_vals &ri_obj);
 
 	void set_params();
 	void set_params(bool polarisation, double W, double E, double T, double D, double Ncore, double Nsub, double Nrib, double Nclad, double WL);
-	void set_params(bool, wg_dims &, ri_vals &); 
+	void set_params(bool polarisation, wg_dims &dim_obj, ri_vals &ri_obj);
 
 	void reduce_wg();
 };

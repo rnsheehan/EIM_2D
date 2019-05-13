@@ -93,6 +93,8 @@ public:
 
 	double get_neff(int i, bool mode); // return the ith computed effective index 
 
+	double coupling_coefficient(double &separ, bool mode); // estimate the coupling coefficient between this waveguide and a copy of itself
+
 private:
 	// methods that the user does not need access to
 

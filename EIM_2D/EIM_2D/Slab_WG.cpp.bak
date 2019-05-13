@@ -371,7 +371,7 @@ double slab_tl_neff::zbrent(double x1, double x2, double tol, bool t, int mm)
 			double fa = eigeneqn_3(a, t, mm), fb = eigeneqn_3(b, t, mm);
 
 			if ((fa>0.0 && fb>0.0) || (fa<0.0 && fb<0.0)) {
-				//std::cerr << "Root must be bracketed in zbrent\n";
+				std::cerr << "Root must be bracketed in zbrent\n";
 			}
 			fc = fb;
 			for (iter = 1; iter <= ITMAX; iter++) {
@@ -564,51 +564,6 @@ double slab_tl_neff::get_neff(int i, bool mode)
 		return 0;
 	}
 	catch (std::invalid_argument &e) {
-		useful_funcs::exit_failure_output(e.what());
-		exit(EXIT_FAILURE);
-	}
-}
-
-double slab_tl_neff::coupling_coefficient(double &separ, bool mode)
-{
-	// estimate the coupling coefficient between this waveguide and a copy of itself
-	// theory taken from "Fundamentals of Optical Waveguides", Okamoto
-	// method uses the waveguide effective index to compute the approximation
-	// you could potentially vary the ridge width when doing this calculation, but adding another layer of objects to enable
-	// this would be very confusing
-	// calculation uses the info that was input into to enable calculation of 2D WG neff, so wavelength and material parameters are the same
-	// R. Sheehan 1 - 10 - 2018
-	// Added here 13 - 5 - 2019
-
-	try {
-		if (nbeta(mode) > 0) {
-
-			double tt = d / 2;
-			double hh = h(0, mode);
-			double pp = p(0, mode);
-			double vs = template_funcs::DSQR(k * na);
-			double num = template_funcs::DSQR(hh * pp);
-			double denom = _beta(0, mode)*(1.0 + (tt * pp))*vs;
-			double arg = -1.0 * pp * (separ - d);
-
-			if (denom > 0) {
-				return ((num / denom)* exp(arg));
-			}
-			else {
-				std::string reason = "Error: double slab_tl_neff::coupling_coefficient(double &separ, bool mode)\n"; 
-				reason += "Division by zero occurred\n"; 
-				throw std::runtime_error(reason);
-				return 0.0;
-			}
-		}
-		else {
-			std::string reason = "Error: double slab_tl_neff::coupling_coefficient(double &separ, bool mode)\n"; 
-			reason += "No modes computed for this waveguide\n";
-			throw std::runtime_error(reason);
-			return 0.0;
-		}
-	}
-	catch (std::runtime_error &e) {
 		useful_funcs::exit_failure_output(e.what());
 		exit(EXIT_FAILURE);
 	}
@@ -817,7 +772,7 @@ double slab_fl_neff_B::zbrent(double x1, double x2, double tol, bool t, int mm)
 			double fa = eigeneqn_b(a, t, mm), fb = eigeneqn_b(b, t, mm);
 
 			if ((fa>0.0 && fb>0.0) || (fa<0.0 && fb<0.0)) {
-				//std::cerr << "Root must be bracketed in zbrent\n";
+				std::cerr << "Root must be bracketed in zbrent\n";
 			}
 			fc = fb;
 			for (iter = 1; iter <= ITMAX; iter++) {

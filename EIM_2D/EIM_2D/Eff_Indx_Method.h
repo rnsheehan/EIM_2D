@@ -29,7 +29,9 @@ public:
 	void set_ridge(double W, double E, double T, double D);
 
 	// getters
-	inline bool params_set() { return params_defined; }
+	inline bool defined() { return params_defined; }
+
+	inline int get_wg_code() { return wg_type;  }
 
 	inline double get_W() { return width;  }
 	inline double get_H() { return height; }
@@ -39,6 +41,8 @@ public:
 
 private:
 	bool params_defined; 
+
+	int wg_type; // code to identify the waveguide geometry
 
 	// Waveguide Dimensions
 	double width; // W rib / ridge width in units of um
@@ -61,7 +65,7 @@ public:
 	void set_ridge(double Ncore, double Nsub, double Nrib, double Nclad, double WL);
 
 	// getters
-	inline bool params_set() { return params_defined;  }
+	inline bool defined() { return params_defined;  }
 	inline double get_Ncore() { return ncore; }
 	inline double get_Nsub() { return nsub; }
 	inline double get_Nrib() { return nrib; }
@@ -95,6 +99,10 @@ public:
 	virtual void set_params(bool polarisation, wg_dims &, ri_vals &);
 
 	void get_index(bool loud); // compute the effective index of the 2D structure
+
+	double neff_value(); // return the effective index of the fundamental mode
+
+	double coupling_coefficient(double &separ); // estimate the coupling coefficient between this waveguide and a copy of itself
 
 	// setters
 	/*inline void set_W(double &val) { width = val;  }
@@ -193,7 +201,7 @@ public:
 	Shallow_Ridge(bool polarisation, wg_dims &dim_obj, ri_vals &ri_obj);
 
 	void set_params();
-	void set_params(bool polarisation, double W, double E, double T, double D, double Ncore, double Nsub, double Nrib, double Nclad, double WL);
+	//void set_params(bool polarisation, double W, double E, double T, double D, double Ncore, double Nsub, double Nrib, double Nclad, double WL);
 	void set_params(bool polarisation, wg_dims &dim_obj, ri_vals &ri_obj);
 
 	void reduce_wg();
