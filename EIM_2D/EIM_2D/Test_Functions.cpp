@@ -149,11 +149,11 @@ void testing::eim_rib_wg()
 
 	double W, E, T, ncore, nsub, nclad, WL; 
 
-	//W = 1.5; E = 0.3; T = 0.45; WL = 1.55; // neff = 3.265 for TM -> TE, neff = 3.269 for TE calc online
-	//ncore = 3.38; nsub = 3.17; nclad = 1.0; // neff = 3.281 for TE -> TM, neff = 3.257 for TM calc online
+	W = 1.5; E = 0.3; T = 0.45; WL = 1.55; // neff = 3.2651 for TM -> TE, neff = 3.2696 for TE calc online
+	ncore = 3.38; nsub = 3.17; nclad = 1.0; // neff = 3.2810 for TE -> TM, neff = 3.2567 for TM calc online
 
-	W = 2.0; E = 0.5; T = 0.5; WL = 1.55; // neff = 3.265 for TM -> TE, neff = 3.269 for TE calc online
-	ncore = 3.38; nsub = 3.17; nclad = 1.0; // neff = 3.281 for TE -> TM, neff = 3.257 for TM calc online
+	//W = 2.0; E = 0.5; T = 0.5; WL = 1.55; // neff = 3.3053 for TM -> TE, neff = 3.3074 for TE calc online
+	//ncore = 3.38; nsub = 3.17; nclad = 1.0; // neff = 3.3140 for TE -> TM, neff = 3.3006 for TM calc online
 
 	wg_dims dim;
 
