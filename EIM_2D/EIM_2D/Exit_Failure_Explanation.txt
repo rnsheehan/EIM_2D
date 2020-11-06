@@ -1,7 +1,0 @@
-Program Exit Explanation
-
-Error occurred: Thu Feb 28 14:16:43 2019
-
-Error: void Shallow_Ridge::set_params(bool polarisation, wg_dims &dim_obj, ri_vals &ri_obj)
-WL: 0.00 is not correct
-

@@ -39,6 +39,12 @@ static const bool TM=0;
 static const bool Ex=1; // Ex propagation is equivalent to TE mode E^{x} polarisation => TM followed by TE
 static const bool Ey=0; // Ey propagation is equivalent to TM mode E^{y} polarisation => TE followed by TM
 
+// integer code to determine the particular waveguide object type
+static const int RECT_WG = 5001; 
+static const int WIRE_WG = 5002;
+static const int RIB_WG = 5003;
+static const int RIDGE_WG = 5004;
+
 static const double EPS=(3.0e-12);
 
 static const double SPEED_OF_LIGHT=(3.0e14); // Speed of light in microns per second
@@ -50,7 +56,8 @@ static const std::string dottxt=".txt";
 
 #include "Templates.h"
 #include "Useful.h"
-
-#include "Slab_Solver.h"
+#include "Slab_WG.h"
+#include "Eff_Indx_Method.h"
+#include "Test_Functions.h"
 
 #endif

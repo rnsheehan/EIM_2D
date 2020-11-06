@@ -21,7 +21,13 @@
     <ClCompile Include="Useful.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Slab_Solver.cpp">
+    <ClCompile Include="Eff_Indx_Method.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Slab_WG.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Test_Functions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -35,7 +41,13 @@
     <ClInclude Include="Useful.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Slab_Solver.h">
+    <ClInclude Include="Eff_Indx_Method.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Slab_WG.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Test_Functions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
