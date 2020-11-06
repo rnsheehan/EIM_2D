@@ -16,9 +16,9 @@ int main(int argc, char *argv[])
 
 	//testing::eim_wire_wg(); 
 
-	testing::eim_rib_wg(); 
+	//testing::eim_rib_wg(); 
 
-	//testing::eim_ridge_wg(); 
+	testing::eim_ridge_wg(); 
 
 	//testing::eim_arb_wg(); 
 
