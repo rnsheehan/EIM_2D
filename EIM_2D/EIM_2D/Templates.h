@@ -22,6 +22,13 @@ namespace template_funcs{
 		return ( (darg=(a)) == (T)(0) ? (T)(0) : darg*darg );
 	}
 
+	template <class T> T SQR_DIFF(T a, T b)
+	{
+		// Computes (a^2 - b^2) 
+
+		return (DSQR(a) - DSQR(b));
+	}
+
 	template <class T> T SIGN(T a,T b)
 	{
 		return ((b)>(T)(0)?fabs(a):-fabs(a));

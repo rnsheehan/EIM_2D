@@ -6,7 +6,6 @@
 // This implementation is a refactoring of an older scheme that has become too cumbersome and unwieldy
 // R. Sheehan 20 - 2 - 2019
 
-
 // EIM is the base class
 // EIM will contain all parameters for the derived classes as well as the implementation of the get_index which will be required
 // by all derived classes. Each derived class will have an instance of the function reduce_wg which will reduce the 2D WG structure
@@ -15,7 +14,7 @@
 // You should be able to reduce the number of set_params methods for the derived classes to a single method defined in EIM base class
 // Although it may be better to have them defined explicitly for the derived classes so that each calculation in reduce_wg is correctly
 // defined. Otherwise you need to have special cases for each of the different waveguides, and that defeats the purpose of using dynamic binding
-// Sticking with the multiple set_params methods!s
+// Sticking with the multiple set_params methods!
 
 class wg_dims {
 public:

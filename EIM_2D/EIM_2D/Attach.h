@@ -21,6 +21,7 @@
 
 #include <cmath>
 #include <vector>
+#include <complex>
 
 #include <algorithm>
 
@@ -52,10 +53,18 @@ static const double EPSILON=(8.85e-18); // Permittivity of free space in Farads 
 static const double MU=(12.566e-13); // Permeability of free space in Henrys per micron
 static const double ETA=sqrt(MU/EPSILON); // Impedance of free space
 
+static const int MAX_PATH_LENGTH = 250; // max. length for a directory in Windows OS
+
+static const std::string empty_str = "";
 static const std::string dottxt=".txt";
+
+static const std::complex<double> zero(0.0, 0.0);
+static const std::complex<double> eye(0.0, 1.0);
+static const std::complex<double> one(1.0, 0.0);
 
 #include "Templates.h"
 #include "Useful.h"
+#include "Vector_Utils.h"
 #include "Slab_WG.h"
 #include "Eff_Indx_Method.h"
 #include "Test_Functions.h"
