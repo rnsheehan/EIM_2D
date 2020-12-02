@@ -12,13 +12,13 @@ int main(int argc, char *argv[])
 {
 	//testing::slab_wg_mode_calc(); 
 
-	//testing::eim_rect_wg(); 
+	testing::eim_rect_wg(); 
 
 	//testing::eim_wire_wg(); 
 
 	//testing::eim_rib_wg(); 
 
-	testing::eim_ridge_wg(); 
+	//testing::eim_ridge_wg(); 
 
 	//testing::eim_arb_wg(); 
 

@@ -16,6 +16,15 @@
 // defined. Otherwise you need to have special cases for each of the different waveguides, and that defeats the purpose of using dynamic binding
 // Sticking with the multiple set_params methods!
 
+// What's the best way to implement the EIM for coupled waveguides? 
+// Should you define EIM_Coupled as a derived class of EIM and then subsequently define 
+// Coupled_Rect as derived class of Rect? Or should you just go for Coupled_Rect as 
+// derived class of Rect with members Rect WG1 and Rect WG2
+// Coupling calculations can be done by having an instance of Coupled_Slabs
+// Might be best just to work out a few examples manually and see if a more generic structure
+// can be deduced from that. This is probably the easiest way to do it tbh. 
+// R. Sheehan 2 - 12 - 2020
+
 class wg_dims {
 public:
 	wg_dims();

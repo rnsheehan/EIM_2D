@@ -69,7 +69,7 @@ void testing::eim_rect_wg()
 	// Seems to be more accurate when computing TE modes (starting from TM)
 	// R. Sheehan 20 - 2 - 2019
 
-	bool polarisation = TE; 
+	bool polarisation = TM; 
 	double WL, W, H, nc, ncl; 
 
 	WL = 1.55; 
@@ -243,4 +243,38 @@ void testing::eim_arb_wg()
 	compute->reduce_wg(); 
 
 	compute->get_index(true); 
+}
+
+void testing::coupled_rect_wg()
+{
+	// Test of the coupled mode calculation for Rect WG
+	// R. Sheehan 2 - 12 - 2020
+
+	bool polarisation = TE;
+	double WL, W, H, nc, ncl;
+
+	WL = 1.55;
+	W = 2; H = 1;
+	nc = 3.38; ncl = 3.17;
+
+	wg_dims dim;
+
+	dim.set_rect_wire(W, H);
+
+	ri_vals ri;
+
+	ri.set_rect(nc, ncl, WL);
+
+	// Compute parameters of WG1
+	Rectangular wguide;
+
+	wguide.set_params(polarisation, dim, ri);
+
+	wguide.reduce_wg();
+
+	wguide.get_index(true);
+
+	// Compute parameters of WG2
+
+	// Set Up Coupled slab WG calculation
 }
