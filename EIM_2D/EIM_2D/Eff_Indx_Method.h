@@ -25,6 +25,15 @@
 // can be deduced from that. This is probably the easiest way to do it tbh. 
 // R. Sheehan 2 - 12 - 2020
 
+// There's a better way. See testing::eim_arb_wg()
+// You can set up an object that takes two pointers to EIM objects as parameters
+// The EIM object is a pointer to a derived  waveguide object (Rect, Rib, Ridge etc)
+// The calculations needed to reduce the 2D WG to a 1D slab can be performed by the EIM object pointer
+// This will work for any pair of pointer to waveguide objects so no need to brute force it for each case
+// It's then very straightforward to use coupled_slab_tl_neff to perform the coupled waveguide analysis
+// All thanks to object oriented programming
+// R. Sheehan 3 - 12 - 2020
+
 class wg_dims {
 public:
 	wg_dims();
@@ -110,7 +119,7 @@ public:
 
 	double neff_value(); // return the effective index of the fundamental mode
 
-	double coupling_coefficient(double &separ); // estimate the coupling coefficient between this waveguide and a copy of itself, possibly best to deprecate this
+	//double coupling_coefficient(double &separ); // estimate the coupling coefficient between this waveguide and a copy of itself, possibly best to deprecate this
 
 	// setters
 	/*inline void set_W(double &val) { width = val;  }

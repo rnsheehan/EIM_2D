@@ -321,38 +321,38 @@ double EIM::neff_value()
 	}
 }
 
-double EIM::coupling_coefficient(double &separ)
-{
-	// estimate the coupling coefficient between this waveguide and a copy of itself
-	// theory taken from "Fundamentals of Optical Waveguides", Okamoto
-	// method uses the waveguide effective index to compute the approximation
-	// you could potentially vary the ridge width when doing this calculation, but adding another layer of objects to enable
-	// this would be very confusing
-	// calculation uses the info that was input into to enable calculation of 2D WG neff, so wavelength and material parameters are the same
-	// R. Sheehan 1 - 10 - 2018
-	// Added here 13 - 5 - 2019
-
-	try {
-		bool c1 = TLS.get_nmodes(not_pol) > 0 ? true : false; 
-		bool c2 = separ > 0 ? true : false;
-		bool c10 = c1 && c2; 
-		if (c10) {
-			return TLS.coupling_coefficient(separ, not_pol); 
-		}
-		else {
-			return 0.0;
-			std::string reason;
-			reason = "Error: double EIM::neff_value()\n";
-			if(!c1) reason += "No modes computed during calculation\n";
-			if (!c2) reason += "Waveguide separation must be positive\n"; 
-			throw std::invalid_argument(reason);
-		}
-	}
-	catch (std::invalid_argument &e) {
-		useful_funcs::exit_failure_output(e.what());
-		exit(EXIT_FAILURE);
-	}
-}
+//double EIM::coupling_coefficient(double &separ)
+//{
+//	// estimate the coupling coefficient between this waveguide and a copy of itself
+//	// theory taken from "Fundamentals of Optical Waveguides", Okamoto
+//	// method uses the waveguide effective index to compute the approximation
+//	// you could potentially vary the ridge width when doing this calculation, but adding another layer of objects to enable
+//	// this would be very confusing
+//	// calculation uses the info that was input into to enable calculation of 2D WG neff, so wavelength and material parameters are the same
+//	// R. Sheehan 1 - 10 - 2018
+//	// Added here 13 - 5 - 2019
+//
+//	try {
+//		bool c1 = TLS.get_nmodes(not_pol) > 0 ? true : false; 
+//		bool c2 = separ > 0 ? true : false;
+//		bool c10 = c1 && c2; 
+//		if (c10) {
+//			return TLS.coupling_coefficient(separ, not_pol); 
+//		}
+//		else {
+//			return 0.0;
+//			std::string reason;
+//			reason = "Error: double EIM::neff_value()\n";
+//			if(!c1) reason += "No modes computed during calculation\n";
+//			if (!c2) reason += "Waveguide separation must be positive\n"; 
+//			throw std::invalid_argument(reason);
+//		}
+//	}
+//	catch (std::invalid_argument &e) {
+//		useful_funcs::exit_failure_output(e.what());
+//		exit(EXIT_FAILURE);
+//	}
+//}
 
 // Rectangular Derived Class Definition
 Rectangular::Rectangular()

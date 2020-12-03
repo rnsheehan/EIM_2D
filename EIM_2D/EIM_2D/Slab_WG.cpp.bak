@@ -10,7 +10,7 @@ slab::slab(void)
 	M = 0;
 
 	k_sqr = nc_sqr = ncl_sqr = ns_sqr = nr_sqr = nm_sqr = k_sqr_nc_sqr = k_sqr_ns_sqr = k_sqr_ncl_sqr = k_sqr_nr_sqr = 0.0;
-	k_sqr_nm_sqr = aa = bb = d = dr = l = nc = ns = ncl = nr = nm = etacr = etacs = etarcl = 0.0;
+	k_sqr_nm_sqr = aa = bb = d = tt = dr = l = nc = ns = ncl = nr = nm = etacr = etacs = etarcl = 0.0;
 	V = na = k = lower = upper = upper = w = efieldint = hfieldint = 0.0;
 }
 
@@ -237,6 +237,8 @@ void slab_tl_neff::set_params(double width, double lambda, double ncore, double 
 
 			d = width;
 
+			tt = 0.5 * d; 
+
 			l = lambda;
 
 			nc = ncore;
@@ -371,7 +373,7 @@ double slab_tl_neff::zbrent(double x1, double x2, double tol, bool t, int mm)
 			double fa = eigeneqn_3(a, t, mm), fb = eigeneqn_3(b, t, mm);
 
 			if ((fa>0.0 && fb>0.0) || (fa<0.0 && fb<0.0)) {
-				//std::cerr << "Root must be bracketed in zbrent\n";
+				std::cerr << "Root must be bracketed in zbrent\n";
 			}
 			fc = fb;
 			for (iter = 1; iter <= ITMAX; iter++) {
@@ -520,7 +522,7 @@ void slab_tl_neff::report(bool mode)
 	std::cout << pol << " Modes\n";
 	std::cout << "There are " << nbeta(mode) << " calculated " + pol + " modes\n";
 
-	for (int i = 0; i<nbeta(mode); i++) {
+	for (int i = 0; i < nbeta(mode); i++) {
 		std::cout << pol + "_{" << i + 1 << "} = " << std::setprecision(10) << _beta(i, mode) << " , n_eff_{" << i + 1 << "} = " << std::setprecision(10) << (_beta(i, mode) / k) << "\n";
 	}
 	std::cout << "\n";
@@ -531,7 +533,7 @@ int slab_tl_neff::get_nmodes(bool mode)
 	// return the number of computed propagation constants for a given polarisation
 	// it can be the case that the predicted value M is greater than the actual number of modes in a waveguide
 
-	return nbeta(mode); 
+	return nbeta(mode);
 }
 
 double slab_tl_neff::get_neff(int i, bool mode)
@@ -559,56 +561,184 @@ double slab_tl_neff::get_neff(int i, bool mode)
 			return 0;
 		}
 	}
-	catch (std::range_error &e) {
+	catch (std::range_error & e) {
 		std::cerr << e.what();
 		return 0;
 	}
-	catch (std::invalid_argument &e) {
+	catch (std::invalid_argument & e) {
 		useful_funcs::exit_failure_output(e.what());
 		exit(EXIT_FAILURE);
 	}
 }
 
-double slab_tl_neff::coupling_coefficient(double &separ, bool mode)
+// Definitions for the three layer slab with optical mode profile calculation
+slab_tl_mode::slab_tl_mode(void)
 {
-	// estimate the coupling coefficient between this waveguide and a copy of itself
-	// theory taken from "Fundamentals of Optical Waveguides", Okamoto
-	// method uses the waveguide effective index to compute the approximation
-	// you could potentially vary the ridge width when doing this calculation, but adding another layer of objects to enable
-	// this would be very confusing
-	// calculation uses the info that was input into to enable calculation of 2D WG neff, so wavelength and material parameters are the same
-	// R. Sheehan 1 - 10 - 2018
-	// Added here 13 - 5 - 2019
+	// Default Constructor
 
+}
+
+slab_tl_mode::slab_tl_mode(double width, double lambda, double ncore, double nsub, double nclad)
+{
+	// Default Constructor
+	set_params(width, lambda, ncore, nsub, nclad);
+}
+
+void slab_tl_mode::compute_neff(bool mode)
+{
+	// Compute the effective indices of the slab waveguide
+	neff_search(mode); 
+
+	std::string pol = (mode ? "TE" : "TM");
+
+	std::cout << "There are " << nbeta(mode) << " calculated " + pol + " modes\n";
+	for (int i = 0; i<static_cast<int>(nbeta(mode)); i++) {
+		std::cout << "beta[" << i + 1 << "] = " << std::setprecision(6) << _beta(i, mode) << " , n_{eff} = " << _beta(i, mode) / k << "\n";
+	}
+	std::cout << "\n";
+}
+
+void slab_tl_mode::output_modes(bool mode, int N, double Lx, std::string &storage_directory)
+{
+	// This function will calculate the solutions corresponding to each mode and output them to a file for a single polarisation
+
+	double xi;
+
+	std::string filename;
+
+	std::string pol = (mode ? "TE" : "TM");
+
+	std::ofstream write;
+
+	if (nbeta(mode) > 0) {
+
+		std::vector< std::vector< double > > mat;
+
+		mat.resize(nbeta(mode) + 2); // We want to output M solutions plus the corresponding positions
+
+		double dx = Lx / (static_cast<double>(N - 1));
+
+		xi = -0.5*Lx;
+
+		mat[0].resize(N + 2);
+
+		for (int j = 1; j <= N; j++) {
+			mat[0][j] = xi;
+			xi += dx;
+		}
+
+		for (int i = 1; i <= nbeta(mode); i++) {
+			mat[i].resize(N + 2);
+			for (int j = 1; j <= N; j++) {
+				mat[i][j] = TE_TM(mat[0][j], i - 1, mode);
+			}
+		}
+
+		// Output all the modes to a single file
+		filename = storage_directory + pol + "_Mode_Profiles.txt";
+		write.open(filename.c_str(), std::ios_base::out | std::ios_base::trunc);
+
+		if (write.is_open()) {
+
+			for (int i = 1; i <= N; i++) {
+				for (int j = 0; j<(nbeta(mode) + 1); j++)
+					if (j == nbeta(mode))
+						write << std::setprecision(20) << mat[j][i];
+					else
+						write << std::setprecision(20) << mat[j][i] << " , ";
+				write << "\n";
+			}
+
+			write.close();
+
+		}
+
+		// output the sine-cosine form of the dispersion equation
+		double db = ((upper - lower) / (99));
+
+		filename = storage_directory + pol + "_Dispersion_Eqn.txt";
+		write.open(filename.c_str(), std::ios_base::out | std::ios_base::trunc);
+
+		for (int i = 1; i<99; i++) {
+			write << lower + i * db << " , " << std::setprecision(20) << eigeneqn(lower + i * db, mode) << "\n";
+		}
+
+		write.close();
+	}
+}
+
+void slab_tl_mode::output_all_stats(std::string &storage_directory)
+{
+	//This function outputs all the stats associated with a particular calculation
+
+	std::string file;
+
+	file = storage_directory + "Slab_WG_Stats.txt";
+
+	std::ofstream stats;
+	stats.open(file.c_str(), std::ios_base::out | std::ios_base::trunc);
+
+	stats << "Output File for the slab waveguide calculator\n";
+	stats << "\n";
+	stats << "Waveguide width = " << d << " microns\n";
+	stats << "Wavelength = " << l << " microns\n";
+	stats << "Wavenumber = " << k << " inverse microns\n";
+	stats << "\n";
+	stats << "Core Index = " << nc << "\n";
+	stats << "Substrate Index = " << ns << "\n";
+	stats << "Cladding Index = " << ncl << "\n";
+	stats << "\n";
+	stats << "Numerical Aperture = " << na << "\n";
+	stats << "V-Parameter = " << V << "\n";
+	stats << "Number of Modes = " << M << "\n";
+	stats << "\n";
+
+	if (nbeta(TE) > 0) {
+
+		output_stats(TE, stats);
+
+	}
+
+	if (nbeta(TM) > 0) {
+
+		output_stats(TM, stats);
+
+	}
+
+	stats.close();
+}
+
+double slab_tl_mode::g1(int i, bool t)
+{
 	try {
-		if (nbeta(mode) > 0) {
+		
+		if (nbeta(t)) {
 
-			double tt = d / 2;
-			double hh = h(0, mode);
-			double pp = p(0, mode);
-			double vs = template_funcs::DSQR(k * na);
-			double num = template_funcs::DSQR(hh * pp);
-			double denom = _beta(0, mode)*(1.0 + (tt * pp))*vs;
-			double arg = -1.0 * pp * (separ - d);
-
-			if (denom > 0) {
-				return ((num / denom)* exp(arg));
+			if (i<0 || i > nbeta(t)) {
+				throw std::range_error("Error: double slab_tl_mode::g1(int i, bool t)\n Attempting to access arrays out of range\n");
+				return 0;
 			}
 			else {
-				std::string reason = "Error: double slab_tl_neff::coupling_coefficient(double &separ, bool mode)\n"; 
-				reason += "Division by zero occurred\n"; 
-				throw std::runtime_error(reason);
-				return 0.0;
+				if (t) {
+					double beta_sqr = template_funcs::DSQR(betaE[i]);
+					return (beta_sqr / k_sqr_nc_sqr) + (beta_sqr / k_sqr_ns_sqr) - 1.0;
+				}
+				else {
+					double beta_sqr = template_funcs::DSQR(betaH[i]);
+					return (beta_sqr / k_sqr_nc_sqr) + (beta_sqr / k_sqr_ns_sqr) - 1.0;
+				}
 			}
 		}
 		else {
-			std::string reason = "Error: double slab_tl_neff::coupling_coefficient(double &separ, bool mode)\n"; 
-			reason += "No modes computed for this waveguide\n";
-			throw std::runtime_error(reason);
-			return 0.0;
+			throw std::invalid_argument("Error: double slab_tl_mode::g1(int i, bool t)\nNo modes have been computed\n");
+			return 0;
 		}
 	}
-	catch (std::runtime_error &e) {
+	catch (std::range_error &e) {
+		std::cerr << e.what();
+		return 0;
+	}
+	catch (std::invalid_argument &e) {
 		useful_funcs::exit_failure_output(e.what());
 		exit(EXIT_FAILURE);
 	}

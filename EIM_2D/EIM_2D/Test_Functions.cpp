@@ -172,14 +172,14 @@ void testing::eim_rib_wg()
 
 	wguide.get_index(true); 
 
-	double separ = 0.25; 
+	/*double separ = 0.25; 
 	std::cout << separ << " , " << wguide.coupling_coefficient(separ) << "\n";
 	separ = 0.5;
 	std::cout << separ << " , " << wguide.coupling_coefficient(separ) << "\n";
 	separ = 1.0; 
 	std::cout << separ << " , " << wguide.coupling_coefficient(separ) << "\n";
 	separ = 2.0;
-	std::cout << separ << " , " << wguide.coupling_coefficient(separ) << "\n";
+	std::cout << separ << " , " << wguide.coupling_coefficient(separ) << "\n";*/
 }
 
 void testing::eim_ridge_wg()
@@ -215,6 +215,10 @@ void testing::eim_arb_wg()
 {
 	// Perform an EIM calculation using the EIM base class
 	// R. Sheehan 28 - 2 - 2019
+
+	// This is a potentially nice way to build a generic object for performing coupled wg calculations
+	// Instead of brute forcing all the different types just set the object up with two pointers to EIM objects
+	// Can you force the two waveguides to be of the same type? 
 
 	bool polarisation = TM;
 

@@ -15,8 +15,6 @@ public:
 protected:	
 	int nbeta(bool mode); // get the number of computed modes in a waveguide
 
-	double _beta(int i, bool t); // return the computed propagation constants
-
 	double h(int i, bool t); // wavenumber in core
 
 	double p(int i, bool t); // wavenumber in substrate
@@ -25,11 +23,14 @@ protected:
 
 	double r(int i, bool t); // wavenumber in rib
 
+	double _beta(int i, bool t); // return the computed propagation constants
+
 protected:
 	// protected members, only to be accessed through derived classes
 	int M; // Predicted number of modes that waveguide can support
 
 	double d; // Waveguide Width
+	double tt; // Half Waveguide Width
 	double dr; // Rib Width
 	double nc; // Core Index
 	double ncl; // Cladding Index
@@ -93,8 +94,6 @@ public:
 
 	double get_neff(int i, bool mode); // return the ith computed effective index 
 
-	double coupling_coefficient(double &separ, bool mode); // estimate the coupling coefficient between this waveguide and a copy of itself
-
 private:
 	// methods that the user does not need access to
 
@@ -106,7 +105,90 @@ private:
 	double g; // Asymmetry factor
 };
 
+class slab_tl_mode : public slab_tl_neff {
+	// class which is used to compute the shapes of optical modes in a three layer slab
+public:
+	slab_tl_mode(void); 
+
+	slab_tl_mode(double width, double lambda, double ncore, double nsub, double nclad);
+
+	void compute_neff(bool mode);
+
+	void output_all_stats(std::string &storage_directory); 
+
+	void output_modes(bool mode, int N, double Lx, std::string &storage_directory); // Output solutions to a file
+
+	double TE_TM(double x, int i, bool mode); // shape of waveguide mode
+
+private:
+	// Functions needed to compute the shape of the waveguide mode
+	double g1(int i, bool t);
+
+	double g2(int i, bool t);
+
+	double deff(int i, bool t); // effective width of waveguide mode
+
+	double phase(int i, bool t); // phase of waveguide mode
+
+	double norm_const(int i, bool t); // normalisation constant of waveguide mode
+
+	double conf_fact(int i, bool t); // Mode confinement factor
+
+	//double TE_TM(double x, int i, bool mode); // shape of waveguide mode
+
+	double eigeneqn(double x, bool t); // Non-linear equation for the propagation constants
+	
+	void output_stats(bool mode, std::ofstream &file_obj); // write computed mode statistics to a file
+};
+
 // Four Layer Slab
+
+class slab_fl_neff_A : protected slab {
+	// class which is used to compute the effective indices in a Case A four layer slab
+
+	// Case A => Field Oscillating in Core and Ridge
+	// For there to be a solution one has to have ns <= ncl < nr < nc
+	
+	// Case B: Field Oscillating in Core Only
+	// For there to be a solution one has to have ncl < nm < nc, where nm = Max(nr,ns)
+public:
+	// Constructors
+	slab_fl_neff_A(void); 
+
+	slab_fl_neff_A(double width, double rib_width, double lambda, double ncore, double nsub, double nclad, double nrib);
+
+	// Methods
+	void set_params(double width, double rib_width, double lambda, double ncore, double nsub, double nclad, double nrib);
+
+	void neff_search(bool mode); 
+
+private:
+	double eigeneqn_a(double x, int mm, bool t);
+
+	double zbrent(double x1, double x2, double tol, bool t, int mm); // Brent method search for roots of eigeneqn_a
+};
+
+class slab_fl_mode_A : public slab_fl_neff_A {
+	// Class for computing the effective indices and mode profiles in type A four layer slab
+public: 
+	slab_fl_mode_A(void); 
+	slab_fl_mode_A(double width, double rib_width, double lambda, double ncore, double nsub, double nclad, double nrib);
+
+	void compute_neff(bool mode);
+
+	//void output_all_stats(std::string &storage_directory);
+
+	//void output_modes(bool mode, int N, double Lx, std::string &storage_directory); // Output solutions to a file
+
+private:
+	double phase(int i, bool t); // phase of waveguide mode
+
+	double TE_TM(double x, int i, bool mode); // shape of waveguide mode
+
+	//double eigeneqn(double x, bool t); // Non-linear equation for the propagation constants
+
+	//void output_stats(bool mode, std::ofstream &file_obj); // write computed mode statistics to a file
+};
 
 class slab_fl_neff_B : protected slab {
 	// class which is used to compute the effective indices in a Case B four layer slab
