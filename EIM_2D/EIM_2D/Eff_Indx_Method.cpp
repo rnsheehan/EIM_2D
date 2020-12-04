@@ -241,7 +241,7 @@ void ri_vals::set_ridge(double Ncore, double Nsub, double Nrib, double Nclad, do
 EIM::EIM()
 {
 	// Default Constructor
-	params_defined = false; 
+	params_defined = pol = not_pol = false; 
 	width = height = etch_depth = slab_height = core_height = 0.0; 
 	ncore = nsub = nrib = nclad = lambda = 0.0; 
 }

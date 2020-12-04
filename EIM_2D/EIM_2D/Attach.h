@@ -67,6 +67,7 @@ static const std::complex<double> one(1.0, 0.0);
 #include "Vector_Utils.h"
 #include "Slab_WG.h"
 #include "Eff_Indx_Method.h"
+#include "Coupled_WG.h"
 #include "Test_Functions.h"
 
 #endif

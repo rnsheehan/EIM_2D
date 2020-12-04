@@ -119,6 +119,12 @@ public:
 
 	double neff_value(); // return the effective index of the fundamental mode
 
+	inline bool defined() { return params_defined;  }
+	inline std::vector<double> reduced_cladding() { return eta_one; }
+	inline std::vector<double> reduced_core() { return eta_two; }
+	inline wg_dims get_dims() { return dimensions; }
+	inline ri_vals get_RI() { return ref_indx; }
+
 	//double coupling_coefficient(double &separ); // estimate the coupling coefficient between this waveguide and a copy of itself, possibly best to deprecate this
 
 	// setters
@@ -151,17 +157,18 @@ protected:
 	double ncore; // core RI
 	double nsub; // substrate RI
 	double nrib; // rib RI
-	double nclad; // claddin RI
+	double nclad; // cladding RI
 
 	double lambda; // Wavelength in units of um
 
 	wg_dims dimensions; // Object for accessing all waveguide dimension parameters
 
-	ri_vals ref_indx; 
+	ri_vals ref_indx; // Object for accessing all waveguide refractive index parameters
 
 	// vectors to hold the reduced index values for the side-slab and the core region
-	std::vector<double> eta_one; 
-	std::vector<double> eta_two; 
+	// reduced waveguide is symmetric slab whose cladding is RI eta_one and core RI is eta_two
+	std::vector<double> eta_one; // reduced cladding indices
+	std::vector<double> eta_two; // reduced core indices
 
 	slab_tl_neff TLS; // three layer slab object
 

@@ -2200,11 +2200,9 @@ void coupled_slabs::set_params(double W1, double W2, double lambda, double ncore
 			cw1 = (EPSILON * omega) / 4.0; // constant required in calculation
 
 			cw2 = 2.0 * omega * MU; // constant required in calculation
-
-			//de_A = ( cw1 * ( template_funcs::DSQR(n_core_B) - template_funcs::DSQR(n_sub) ) ) ;
+			
 			de_A = (cw1 * template_funcs::SQR_DIFF(n_core_B, n_sub));
 
-			//de_B = ( cw1 * ( template_funcs::DSQR(n_core_A) - template_funcs::DSQR(n_sub) ) ) ;
 			de_B = (cw1 * template_funcs::SQR_DIFF(n_core_A, n_sub));
 
 			WGA.set_params(W1, lambda, ncore1, nsub, nsub); // assign the parameters to the slab object
