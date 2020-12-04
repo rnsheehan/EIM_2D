@@ -35,7 +35,7 @@ coupWG::~coupWG()
 	waveguides_reduced = false; 
 }
 
-void coupWG::set_params(EIM* wgobjA, EIM* wgobjB, bool loud)
+void coupWG::set_params(EIM* wgobjA, EIM* wgobjB)
 {
 	// method for assigning the parameter values
 	// all parameters in the waveguide objects must be assigned correctly before proceeding with calculation
@@ -58,7 +58,7 @@ void coupWG::set_params(EIM* wgobjA, EIM* wgobjB, bool loud)
 		}
 		else {
 			std::string reason;
-			reason = "Error: void coupWG::set_params(EIM& wgobjA, EIM& wgobjB, bool loud)\n";
+			reason = "Error: void coupWG::set_params(EIM& wgobjA, EIM& wgobjB)\n";
 			if (!c1) reason += "Parameters not defined in wgobjA\n";
 			if (!c2) reason += "Parameters not defined in wgobjB\n";
 
@@ -71,7 +71,7 @@ void coupWG::set_params(EIM* wgobjA, EIM* wgobjB, bool loud)
 	}
 }
 
-void coupWG::reduce_wg()
+void coupWG::reduce_wg(bool loud)
 {
 	// Perform the EIM calculations to reduce the 2D WG to 1D slabs
 	// R. Sheehan 4 - 12 - 2020
@@ -80,13 +80,15 @@ void coupWG::reduce_wg()
 		if (params_defined) {
 			
 			WGA->reduce_wg(); // reduce WGA 2D -> 1D
+			//WGA->get_index(loud); // compute the effective index of the 2D waveguide
 
 			WGB->reduce_wg(); // reduce WGB 2D -> 1D
+			//WGB->get_index(loud); // compute the effective index of the 2D waveguide
 
 			// check if the waveguides entered actually allow bound modes
 			// to be fair if either waveguide does not allow bound modes 
 			// an error will already have been thrown
-			if ( !(WGA->neff_value() > 0.0) || !(WGB->neff_value() > 0.0) ) {
+			if ( !( WGA->reduced_core().size() > 0 ) || !( WGB->reduced_core().size() > 0 ) ) {
 				waveguides_reduced = false; 
 
 				std::string reason;
@@ -148,4 +150,14 @@ void coupWG::coupling_coeffs(double pitch, bool loud)
 	catch (std::runtime_error& e) {
 		std::cerr << e.what();
 	}
+}
+
+coupWGitself::coupWGitself()
+{
+	// Default Constructor
+}
+
+coupWGitself::coupWGitself(EIM* wgobj)
+{
+	set_params(wgobj, wgobj); 
 }

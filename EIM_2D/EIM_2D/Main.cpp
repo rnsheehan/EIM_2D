@@ -20,7 +20,11 @@ int main(int argc, char *argv[])
 
 	//testing::eim_ridge_wg(); 
 
-	testing::eim_arb_wg(); 
+	//testing::eim_arb_wg(); 
+
+	//testing::coupled_rect_wg(); 
+
+	testing::coupled_rib_wg();
 
 	std::cout<<"Press enter to close console\n";
 	std::cin.get(); 

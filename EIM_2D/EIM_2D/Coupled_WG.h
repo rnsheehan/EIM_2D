@@ -19,6 +19,18 @@
 // Worthty of further investigation given the applications
 // R. Sheehan 4 - 12 - 2020
 
+// Dev. Note
+// It might be preferable to set up derived classes for the different cases of 
+// 1. waveguide coupling to a copy of itself
+// 2. waveguide coupling to a different waveguide
+// In case 1 you could reduce the overhead by reducing the number of slab waveguide mode calculations
+// Is it worth the effort though? The overhead due to the calculation is tiny
+// Even then is the effort needed to define the derived classes worth it
+// Just trying to remember the logic around virtual functions is making my head hurt
+// You can always just run the calculation by passing two pointers to the same waveguide object
+// This is in fact what I have done in the "derived class"
+// R. Sheehan 4 - 12 - 2020
+
 class coupWG {
 public:
 	coupWG();
@@ -26,13 +38,13 @@ public:
 	coupWG(coupWG& obj); 
 	~coupWG();
 
-	void set_params(EIM* wgobjA, EIM* wgobjB, bool loud = false);
+	void set_params(EIM* wgobjA, EIM* wgobjB);
 
-	void reduce_wg(); 
+	void reduce_wg(bool loud = false); 
 
 	void coupling_coeffs(double pitch, bool loud = false);
 
-private:
+protected:
 	bool params_defined; 
 	bool waveguides_reduced; 
 
@@ -40,6 +52,17 @@ private:
 	EIM* WGB; // pointer to 2D waveguide B
 
 	coupled_slabs coupling; // object used to perform the coupling calculations
+};
+
+// Derived class that can be used to examine the coupling characterisics of a waveguide with a copy of itself
+// The only difference is that the constructor passes the same pointer wgobj to both arguments of set_params
+// I guess it makes a slightly less complicated interface available, but it's just a wrapper
+// R. Sheehan 4 - 12 - 2020
+
+class coupWGitself : public coupWG {
+public:
+	coupWGitself();
+	coupWGitself(EIM* wgobj);
 };
 
 #endif 

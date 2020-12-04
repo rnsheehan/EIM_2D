@@ -22,7 +22,9 @@ namespace testing {
 
 	void eim_arb_wg(); 
 
-	void coupled_rect_wg(); 
+	void coupled_rect_wg();
+
+	void coupled_rib_wg();
 }
 
 #endif

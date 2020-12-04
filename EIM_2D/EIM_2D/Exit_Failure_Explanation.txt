@@ -1,7 +1,8 @@
 Program Exit Explanation
 
-Error occurred: Thu Feb 28 14:16:43 2019
+Error occurred: Fri Dec  4 14:18:12 2020
 
-Error: void Shallow_Ridge::set_params(bool polarisation, wg_dims &dim_obj, ri_vals &ri_obj)
-WL: 0.00 is not correct
+Error: void coupled_slabs::compute_coefficients(double pitch)
+WG pitch = 2.000 is too small
+min pitch = 2.000
 

@@ -252,9 +252,9 @@ void testing::eim_arb_wg()
 void testing::coupled_rect_wg()
 {
 	// Test of the coupled mode calculation for Rect WG
-	// R. Sheehan 2 - 12 - 2020
+	// R. Sheehan 4 - 12 - 2020
 
-	bool polarisation = TE;
+	bool polarisation = TM;
 	double WL, W, H, nc, ncl;
 
 	WL = 1.55;
@@ -263,22 +263,75 @@ void testing::coupled_rect_wg()
 
 	wg_dims dim;
 
-	dim.set_rect_wire(W, H);
+	ri_vals ri;	
 
-	ri_vals ri;
+	// Set parameters of WGA
+	Rectangular wguideA;
+
+	dim.set_rect_wire(W, H);
 
 	ri.set_rect(nc, ncl, WL);
 
-	// Compute parameters of WG1
-	Rectangular wguide;
+	wguideA.set_params(polarisation, dim, ri);
 
-	wguide.set_params(polarisation, dim, ri);
+	// Set parameters of WGA
+	Rectangular wguideB;
 
-	wguide.reduce_wg();
+	dim.set_rect_wire(W, H);
 
-	wguide.get_index(true);
+	ri.set_rect(nc, ncl, WL);
 
-	// Compute parameters of WG2
+	wguideB.set_params(polarisation, dim, ri);
 
-	// Set Up Coupled slab WG calculation
+	// Instantiate Coupled Waveguide Object
+	coupWG Pair; 
+
+	Pair.set_params(&wguideA, &wguideB); 
+
+	bool loud = true; 
+
+	Pair.reduce_wg(loud); 
+
+	Pair.coupling_coeffs(1.1*W, loud); 
+}
+
+void testing::coupled_rib_wg()
+{
+	// Test of the coupled mode calculation for Rect WG
+	// R. Sheehan 2 - 12 - 2020
+
+	bool polarisation = TM;
+
+	double W, E, T, ncore, nsub, nclad, WL;
+
+	W = 1.5; E = 0.3; T = 0.45; WL = 1.55; // neff = 3.2651 for TM -> TE, neff = 3.2696 for TE calc online
+	ncore = 3.38; nsub = 3.17; nclad = 1.0; // neff = 3.2810 for TE -> TM, neff = 3.2567 for TM calc online
+
+	//W = 2.0; E = 0.5; T = 0.5; WL = 1.55; // neff = 3.3053 for TM -> TE, neff = 3.3074 for TE calc online
+	//ncore = 3.38; nsub = 3.17; nclad = 1.0; // neff = 3.3140 for TE -> TM, neff = 3.3006 for TM calc online
+
+	wg_dims dim;
+
+	ri_vals ri;	
+
+	// Set parameters for waveguide A
+	Rib wguideA;
+
+	dim.set_rib(W, E, T);
+	
+	ri.set_rib_wire(ncore, nsub, nclad, WL);
+	
+	wguideA.set_params(polarisation, dim, ri);
+
+	// Instantiate Coupled Waveguide Object
+	//coupWG Pair;
+	//Pair.set_params(&wguideA, &wguideA);
+	
+	coupWGitself Pair(&wguideA); 
+
+	bool loud = true;
+
+	Pair.reduce_wg(loud);
+
+	Pair.coupling_coeffs(1.1 * W, loud);
 }
