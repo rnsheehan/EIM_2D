@@ -23,8 +23,6 @@ namespace vecut {
 
 	std::vector<std::vector<std::complex<double>>> zero_cmat(int &rows, int &cols); 
 	std::vector<std::vector<std::complex<double>>> idn_cmat(int &size);
-
-	double inf_norm(std::vector<double>& vec);
 }
 
 #endif

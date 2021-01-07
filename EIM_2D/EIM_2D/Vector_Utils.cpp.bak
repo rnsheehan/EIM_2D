@@ -568,31 +568,3 @@ std::vector<std::vector<std::complex<double>>> vecut::idn_cmat(int &size)
 		exit(EXIT_FAILURE);
 	}
 }
-
-double vecut::inf_norm(std::vector<double> &vec)
-{
-	// determine the infinity-norm (largest value by absolute value) in a given vector
-	// R. Sheehan 4 - 1 - 2021
-
-	try {
-		if (!vec.empty()) {
-			double t1 = 0.0, norm = 0.0; 
-
-			for (size_t i = 0; i < vec.size(); i++) 
-				if ( ( t1 = fabs(vec[i]) ) > norm) 
-					norm = t1; 
-
-			return norm; 
-		}
-		else {
-			return 0.0; 
-			std::string reason = "Error: double vecut::inf_norm(std::vector<double> &vec)\n";
-			reason += "Vector has not been assigned values\n";
-			throw std::invalid_argument(reason);
-		}
-	}
-	catch (std::invalid_argument& e) {
-		useful_funcs::exit_failure_output(e.what());
-		exit(EXIT_FAILURE);
-	}
-}
