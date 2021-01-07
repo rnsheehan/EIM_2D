@@ -136,24 +136,24 @@ double slab::q(int i, bool t)
 	}
 }
 
-double slab::r(int i, bool t)
+double slab::rA(int i, bool t)
 {
-	//Wavenumber in Rib
+	//Wavenumber in Rib for Case A of FL slab
 
 	try {
 
 		if (nbeta(t) > 0) {
 
 			if (i<0 || i > nbeta(t)) {
-				throw std::range_error("Error: double slab::r(int i, bool t)\n Attempting to access arrays out of range\n");
+				throw std::range_error("Error: double slab::rA(int i, bool t)\n Attempting to access arrays out of range\n");
 				return 0;
 			}
 			else {
 				if (t) {
-					return sqrt( template_funcs::DSQR(betaE[i]) - k_sqr_nr_sqr);
+					return sqrt(k_sqr_nr_sqr - template_funcs::DSQR(betaE[i]));
 				}
 				else {
-					return sqrt( template_funcs::DSQR(betaH[i]) - k_sqr_nr_sqr);
+					return sqrt(k_sqr_nr_sqr - template_funcs::DSQR(betaH[i]));
 				}
 			}
 
@@ -168,6 +168,43 @@ double slab::r(int i, bool t)
 		return 0;
 	}
 	catch (std::invalid_argument &e) {
+		useful_funcs::exit_failure_output(e.what());
+		exit(EXIT_FAILURE);
+	}
+}
+
+double slab::rB(int i, bool t)
+{
+	//Wavenumber in Rib for Case B of FL slab
+
+	try {
+
+		if (nbeta(t) > 0) {
+
+			if (i<0 || i > nbeta(t)) {
+				throw std::range_error("Error: double slab::rB(int i, bool t)\n Attempting to access arrays out of range\n");
+				return 0;
+			}
+			else {
+				if (t) {
+					return sqrt(template_funcs::DSQR(betaE[i]) - k_sqr_nr_sqr);
+				}
+				else {
+					return sqrt(template_funcs::DSQR(betaH[i]) - k_sqr_nr_sqr);
+				}
+			}
+
+		}
+		else {
+			throw std::invalid_argument("Error: double slab::r(int i, bool t)\nNo modes have been computed\n");
+			return 0;
+		}
+	}
+	catch (std::range_error& e) {
+		std::cerr << e.what();
+		return 0;
+	}
+	catch (std::invalid_argument& e) {
 		useful_funcs::exit_failure_output(e.what());
 		exit(EXIT_FAILURE);
 	}
@@ -1161,9 +1198,9 @@ void slab_fl_neff_A::set_params(double width, double rib_width, double lambda, d
 			ncl = nclad;
 			ncl_sqr = template_funcs::DSQR(ncl);
 
-			nm = std::min(ns, ncl);
+			nm = std::max(ns, ncl);
 			nm_sqr = template_funcs::DSQR(nm);
-			
+
 			k = Two_PI / l;
 			k_sqr = template_funcs::DSQR(k); // k_{0}^{2}
 
@@ -1178,24 +1215,21 @@ void slab_fl_neff_A::set_params(double width, double rib_width, double lambda, d
 			etarcl = nr_sqr / ncl_sqr;
 
 			// Only difference between A, B cases is search space for neff and eigenequation
-			// Case A: lower = k ncl, upper = k nc, NA^{2} = nr^{2} - ncl^{2}
-			// Case B: lower = k nm, upper - k nc, NA^{2} = nc^{2} - nm^{2}
+			// Case A: lower = k max{ncl, ns}, upper = k nr, NA^{2} = nr^{2} - max{ncl, ns}^{2}
+			// Case B: lower = k nm, upper =k nc, NA^{2} = nc^{2} - nm^{2}
 
 			double x = nr_sqr - nm_sqr;
-			//double x = nc_sqr - nm_sqr;
 
 			na = sqrt(x); // numerical aperture
 
-			//V = (PI*(d+dr)*na) / l; // V-parameter
-			V = (PI*d*na) / l; // V-parameter
+			V = (PI * (dr) * na) / l; // V-parameter
 
 			// predicted number of modes
 			M = static_cast<int>( std::max( 1.0, ceil( (2.0*V / PI) ) ) );
 
-			lower = k * nm; // lower bound of search space
+			lower = k * nm; // lower bound of search space for case A
 
-			//upper = k * nc; // upper bound of search space
-			upper = k * nr; // upper bound of search space
+			upper = k * nr; // upper bound of search space for case A
 
 			w = k * SPEED_OF_LIGHT;
 
@@ -1236,7 +1270,7 @@ double slab_fl_neff_A::eigeneqn_a(double x, int mm, bool t)
 	// https://xkcd.com/2034/
 
 	try{
-		//if (k_sqr_nc_sqr > k_sqr_nm_sqr) {
+		
 		if (k_sqr_nr_sqr > k_sqr_nm_sqr) {
 
 			double h, p, q, r, tmp;
@@ -1275,6 +1309,66 @@ double slab_fl_neff_A::eigeneqn_a(double x, int mm, bool t)
 	}
 }
 
+double slab_fl_neff_A::eigeneqn_aa(double x, bool t)
+{
+	// Dispersion equation corresponding to case a from Adams
+
+	// Case A => Field Oscillating in Core and Ridge
+	// For there to be a solution one has to have ns <= ncl < nr < nc
+
+	// equation re-written in an attempt to ameliorate effects of discontinuities arising from taking tangent of various items
+	// R. Sheehan 18 - 12 - 2020
+
+	try {
+
+		if (k_sqr_nr_sqr > k_sqr_nm_sqr) {
+
+			double h, p, q, r, tmp, Wh, psi, t1, t2, t3, t4;
+
+			double x_sqr = template_funcs::DSQR(x);
+
+			tmp = k_sqr_nc_sqr - x_sqr;
+			h = (tmp > 0 ? sqrt(tmp) : 0.0);
+
+			tmp = k_sqr_nr_sqr - x_sqr;
+			r = (tmp > 0 ? sqrt(tmp) : 0.0);
+
+			tmp = x_sqr - k_sqr_ns_sqr;
+			p = (tmp > 0 ? sqrt(tmp) : 0.0);
+
+			tmp = x_sqr - k_sqr_ncl_sqr;
+			q = (tmp > 0 ? sqrt(tmp) : 0.0);
+
+			Wh = d * h;
+			t1 = sin(Wh);
+			t2 = cos(Wh);
+
+			if (t) {//TE modes
+				t3 = (p / h);
+				t4 = (r / h);
+				psi = atan(q / r) - (dr * r);
+			}
+			else {//TM modes
+				t3 = etacs * (p / h);
+				t4 = etacr * (r / h);
+				psi = atan( etarcl * (q / r) ) - (dr * r);
+			}
+
+			return ( ( t1 - (t3 * t2) ) - ( (t3 * t1) + t2) * t4 * tan(psi) );
+		}
+		else {
+			std::string reason = "Error: double slab_fl_neff_A::eigeneqn_a(double x, int mm, bool t)\n";
+			reason += "Input parameters not correctly defined\n";
+			reason += "k_{0}^{2} n_{c}^{2} = " + template_funcs::toString(k_sqr_nc_sqr) + ", k_{0}^{2} n_{r}^{2} = " + template_funcs::toString(k_sqr_nr_sqr) + "\n";
+			return 0;
+		}
+	}
+	catch (std::invalid_argument& e) {
+		useful_funcs::exit_failure_output(e.what());
+		exit(EXIT_FAILURE);
+	}
+}
+
 double slab_fl_neff_A::zbrent(double x1, double x2, double tol, bool t, int mm)
 {
 	//Find the root of the function between x1 and x2 using brent's method
@@ -1298,7 +1392,8 @@ double slab_fl_neff_A::zbrent(double x1, double x2, double tol, bool t, int mm)
 
 			double a = std::min(x1, x2), b = std::max(x1, x2), c = std::max(x1, x2), d, e, min1, min2;
 			double fc, p, q, r, s, tol1, xm;
-			double fa = eigeneqn_a(a, t, mm), fb = eigeneqn_a(b, t, mm);
+			//double fa = eigeneqn_a(a, mm, t), fb = eigeneqn_a(b, mm, t);
+			double fa = eigeneqn_aa(a, t), fb = eigeneqn_aa(b, t);
 
 			if ((fa>0.0 && fb>0.0) || (fa<0.0 && fb<0.0)) {
 				std::cerr << "Root must be bracketed in zbrent\n";
@@ -1321,10 +1416,10 @@ double slab_fl_neff_A::zbrent(double x1, double x2, double tol, bool t, int mm)
 				tol1 = 2.0*EPS*fabs(b) + 0.5*tol;
 				xm = 0.5*(c - b);
 				if (fabs(xm) <= tol1 || fb == 0.0) return b;
-				/*if(fabs(xm)<=tol1 || fb==0.0){
-				std::cout<<"Brent's Method converged in "<<iter<<" iterations\n";
-				return b;
-				}*/
+				if(fabs(xm)<=tol1 || fb==0.0){
+					std::cout<<"Brent's Method converged in "<<iter<<" iterations\n";
+					return b;
+				}
 				if (fabs(e) >= tol1 && fabs(fa)>fabs(fb)) {
 					s = fb / fa;
 					if (a == c) {
@@ -1362,7 +1457,8 @@ double slab_fl_neff_A::zbrent(double x1, double x2, double tol, bool t, int mm)
 				else {
 					b += template_funcs::SIGN(tol1, xm);
 				}
-				fb = eigeneqn_a(b, t, mm);
+				//fb = eigeneqn_a(b, mm, t);
+				fb = eigeneqn_aa(b, t);
 			}
 			std::cerr << "Maximum number of iterations exceeded in zbrent\n";
 			return 0.0;
@@ -1381,30 +1477,83 @@ double slab_fl_neff_A::zbrent(double x1, double x2, double tol, bool t, int mm)
 	}
 }
 
-void slab_fl_neff_A::neff_search(bool mode)
-{
-	// Compute the waveguide mode effective indices based on given polarisation and wg_type
-	
-	// Case A => Field Oscillating in Core and Ridge
-	// For there to be a solution one has to have ns <= ncl < nr < nc
+//void slab_fl_neff_A::neff_search(bool mode)
+//{
+//	// Compute the waveguide mode effective indices based on given polarisation and wg_type
+//	
+//	// Case A => Field Oscillating in Core and Ridge
+//	// For there to be a solution one has to have ns <= ncl < neff < nr
+//
+//	// Case A: lower = k ncl, upper = k nr, NA^{2} = nr^{2} - ncl^{2}
+//
+//	try {
+//		if (lower < upper) {
+//		
+//			int m;
+//			double b;
+//
+//			std::vector<double> vec;
+//
+//			for (m = 0; m < M; m++) {
+//				b = zbrent(lower, upper, EPS, mode, m);
+//
+//				if (b>lower && b<upper) {
+//					vec.push_back(b);
+//				}
+//
+//			}
+//
+//			if (mode) {
+//				betaE = vec;
+//			}
+//			else {
+//				betaH = vec;
+//			}
+//
+//			vec.clear();
+//		}
+//		else {
+//			std::string reason = "Error: void slab_fl_neff_A::neff_search(bool mode, bool wg_type)\n";
+//			reason += "Search range is not correctly defined\n";
+//			reason += "lower = " + template_funcs::toString(lower, 4) + ", upper = " + template_funcs::toString(upper, 4) + "\n";
+//			throw std::range_error(reason);
+//		}	
+//	}
+//	catch (std::range_error &e) {
+//		useful_funcs::exit_failure_output(e.what());
+//		exit(EXIT_FAILURE);
+//	}
+//}
 
-	// Case A: lower = k ncl, upper = k nc, NA^{2} = nr^{2} - ncl^{2}
+void slab_fl_neff_A::neff_search(bool mode) 
+{
+	// Alternative neff_search based on fuinding roots of eigeneqn_aa
+	// R. Sheehan 4 - 1 - 2021
+
+	// Case A => Field Oscillating in Core and Ridge
+	// For there to be a solution one has to have nm < neff < nr
+
+	// Case A: lower = k nm, upper = k nr, NA^{2} = nr^{2} - nm^{2}
+
+	// Roots must be bracket before proceeding
 
 	try {
-		if (lower < upper) {
-		
-			int m;
+		bool c1 = lower < upper ? true : false; 
+		bool c2 = brackets.size() > 0 ? true : false; 
+		bool c10 = c1 && c2; 
+		if (c10) {
+			int m = 0;
 			double b;
 
 			std::vector<double> vec;
 
-			for (m = 0; m < M; m++) {
-				b = zbrent(lower, upper, EPS, mode, m);
+			for (int i = static_cast<int>( brackets.size() ) - 1; i >= 0 ; i--) {
 
-				if (b>lower && b<upper) {
+				b = zbrent(brackets[i].get_x_lower(), brackets[i].get_x_upper(), EPS, mode, m);
+
+				if (b > lower && b < upper) {
 					vec.push_back(b);
 				}
-
 			}
 
 			if (mode) {
@@ -1415,16 +1564,194 @@ void slab_fl_neff_A::neff_search(bool mode)
 			}
 
 			vec.clear();
-
 		}
 		else {
-			std::string reason = "Error: void slab_fl_neff_A::neff_search(bool mode, bool wg_type)\n";
+			std::string reason = "Error: void slab_fl_neff_A::neff_search_aa(bool mode, bool wg_type)\n";
+			if(!c1) reason += "Search range is not correctly defined\n";
+			if(!c1) reason += "lower = " + template_funcs::toString(lower, 4) + ", upper = " + template_funcs::toString(upper, 4) + "\n";
+			if (!c2) reason += "Bracketing intervals for roots have not been found\n"; 
+			throw std::range_error(reason);
+		}
+	}
+	catch (std::range_error& e) {
+		useful_funcs::exit_failure_output(e.what());
+		exit(EXIT_FAILURE);
+	}
+}
+
+void slab_fl_neff_A::bracket_roots(bool mode, bool loud)
+{
+	// step through the search space and see what intervals contain roots of the dispersion equation
+	// Bracketing algorithm taken from earlier work https://github.com/rnsheehan/find_roots_1D
+	// R. Sheehan 4 - 1 - 2021
+
+	try {
+		if (lower < upper) {
+		
+			int N = 201; // divide the search space into a number of sub-intervals
+
+			// compute the step-size in the search space
+			double dx = (upper - lower) / (static_cast<double>(N - 1));
+
+			double xl = lower + dx;
+			double xu = xl + dx; 
+			double fl, fu; 
+
+			// remove any stored intervals
+			brackets.clear(); 
+
+			for (int i = 1; i <= N - 2; i++) {
+
+				// Evaluate the dispersion equation at the interval endpoints
+				if (i == 1) {
+					fl = template_funcs::Signum( eigeneqn_aa(xl, mode) );
+				}
+				else {
+					fl = fu; 
+				}
+
+				fu = template_funcs::Signum( eigeneqn_aa(xu, mode) );
+
+				// Perform the bisection test
+				if (fl * fu < 0.0) {
+					// the sub-interval contains a root so it is stored
+					brackets.push_back(interval(xl, xu));
+				}
+
+				// update the endpoints of the sub-interval
+				xl = xu;
+				xu += dx; 
+			}
+
+			if (loud && brackets.size() > 0) {
+				std::cout << "The search space contains " << brackets.size() << " roots\n"; 
+				for (size_t j = 0; j < brackets.size(); j++) {
+					std::cout << brackets[j].get_x_lower() << " , " << brackets[j].get_x_upper() << "\n"; 
+				}
+			}
+		}
+		else {
+			std::string reason = "Error: void slab_fl_neff_A::bracket_roots(bool mode)\n";
 			reason += "Search range is not correctly defined\n";
 			reason += "lower = " + template_funcs::toString(lower, 4) + ", upper = " + template_funcs::toString(upper, 4) + "\n";
 			throw std::range_error(reason);
-		}	
+		}
 	}
-	catch (std::range_error &e) {
+	catch (std::range_error& e) {
+		useful_funcs::exit_failure_output(e.what());
+		exit(EXIT_FAILURE);
+	}
+}
+
+void slab_fl_neff_A::output_disp_eqn_a(bool mode, std::string& storage_directory)
+{
+	// Output the case A four-layer slab dispersion equation
+	// R. Sheehan 18 - 12 - 2020
+
+	try {
+		if (lower < upper) {
+			int N = 101; 
+
+			// create array to hold dispersion equations for all the modes
+			std::vector< std::vector< double > > mat;
+
+			mat.resize(M + 2); // We want to output M solutions plus the corresponding positions
+
+			// store the positions at which the eigeneqn_a will be evaluated
+			double dx = (upper - lower) / (static_cast<double>(N - 1));
+
+			double xi = lower;
+
+			mat[0].resize(N + 2);
+
+			for (int j = 1; j <= N; j++) {
+				mat[0][j] = xi;
+				xi += dx;
+			}
+
+			// compute the values of the dispersion equation for each of the expected modes
+			for (int i = 1; i <= M; i++) {
+				mat[i].resize(N + 2);
+				for (int j = 1; j <= N; j++) {
+					mat[i][j] = eigeneqn_a(mat[0][j], i - 1, mode);
+				}
+			}
+
+			// Output the computed dispersion equations
+			std::string pol = (mode ? "TE" : "TM");
+			std::string filename = storage_directory + pol + "_Disp_Eqns_FL_A.txt";
+			std::ofstream write;
+			
+			write.open(filename.c_str(), std::ios_base::out | std::ios_base::trunc);
+
+			if (write.is_open()) {
+
+				for (int i = 1; i <= N; i++) {
+					for (int j = 0; j < (M + 1); j++)
+						if (j == M)
+							write << std::setprecision(20) << mat[j][i];
+						else
+							write << std::setprecision(20) << mat[j][i] << " , ";
+					write << "\n";
+				}
+
+				write.close();
+			}
+
+			mat.clear(); 
+		}
+		else {
+			std::string reason = "Error: void slab_fl_neff_A::output_disp_eqn(bool mode)\n";
+			reason += "Search range is not correctly defined\n";
+			reason += "lower = " + template_funcs::toString(lower, 4) + ", upper = " + template_funcs::toString(upper, 4) + "\n";
+			throw std::range_error(reason);
+		}
+	}
+	catch (std::range_error& e) {
+		useful_funcs::exit_failure_output(e.what());
+		exit(EXIT_FAILURE);
+	}
+}
+
+void slab_fl_neff_A::output_disp_eqn_aa(bool mode, std::string& storage_directory)
+{
+	// Output the case A four-layer slab dispersion equation
+	// R. Sheehan 18 - 12 - 2020
+
+	try {
+		if (lower < upper) {
+			int N = 201;
+
+			// store the positions at which the eigeneqn_a will be evaluated
+			double dx = (upper - lower) / (static_cast<double>(N - 1));
+
+			double xi = lower + dx;
+
+			// Output the computed dispersion equations
+			std::string pol = (mode ? "TE" : "TM");
+			std::string filename = storage_directory + pol + "_Disp_Eqns_FL_AA.txt";
+			std::ofstream write;
+
+			write.open(filename.c_str(), std::ios_base::out | std::ios_base::trunc);
+
+			if (write.is_open()) {
+
+				for (int i = 1; i <= N - 2; i++) {
+					write << std::setprecision(10) << xi << " , " << eigeneqn_aa(xi, mode) << "\n"; 
+					xi += dx; 
+				}
+
+				write.close();
+			}
+		}
+		else {
+			std::string reason = "Error: void slab_fl_neff_A::output_disp_eqn(bool mode)\n";
+			reason += "Search range is not correctly defined\n";
+			reason += "lower = " + template_funcs::toString(lower, 4) + ", upper = " + template_funcs::toString(upper, 4) + "\n";
+			throw std::range_error(reason);
+		}
+	}
+	catch (std::range_error& e) {
 		useful_funcs::exit_failure_output(e.what());
 		exit(EXIT_FAILURE);
 	}
@@ -1450,33 +1777,37 @@ void slab_fl_mode_A::compute_neff(bool mode)
 
 	std::string pol = (mode ? "TE" : "TM");
 
+	std::cout << "Search Space: \n";
+	std::cout << "lower: " << lower << " < beta < upper: " << upper << "\n"; 
+	std::cout << "lower: " << nm << " < neff < upper: " << nr << "\n"; 
+	std::cout << "There are " << M << " predicted modes\n"; 
 	std::cout << "There are " << nbeta(mode) << " calculated " + pol + " modes\n";
 	for (int i = 0; i<static_cast<int>(nbeta(mode)); i++) {
-		std::cout << "beta[" << i + 1 << "] = " << std::setprecision(6) << _beta(i, mode) << "\n";
+		std::cout << "beta[" << i + 1 << "] = " << std::setprecision(6) << _beta(i, mode) << " , n_{eff} = " << _beta(i, mode) / k << "\n";
 	}
 	std::cout << "\n";
 }
 
 double slab_fl_mode_A::phase(int i, bool t)
 {
-	// Phase of mode in type B four layer slab waveguide
+	// Phase of mode in type A four layer slab waveguide
 
 	try {
 		if (nbeta(t) > 0) {
 			if (i<0 || i > nbeta(t)) {
-				throw std::range_error("Error: double slab_fl_mode_B::phase(int i, bool t)\n Attempting to access arrays out of range\n");
+				throw std::range_error("Error: double slab_fl_mode_A::phase(int i, bool t)\n Attempting to access arrays out of range\n");
 				return 0;
 			}
 			else {
 				if (t) {
 					double qq = q(i, t);
-					double rr = r(i, t);
-					return -1.0*((dr * rr) + atanh(qq / rr));
+					double rr = rA(i, t);
+					return ( atan( qq / rr ) - (dr * rr) );
 				}
 				else {
 					double qq = q(i, t);
-					double rr = r(i, t);
-					return -1.0*((dr * rr) + atanh((etarcl * qq) / rr));
+					double rr = rA(i, t);
+					return ( atan( etarcl * ( qq / rr) ) - ( dr * rr ) );
 				}
 			}
 		}
@@ -1510,8 +1841,9 @@ double slab_fl_mode_A::TE_TM(double x, int i, bool mode)
 			}
 			else {
 				double hh = h(i, mode);
-				double rr = r(i, mode);
+				double rr = rA(i, mode);
 				double wh = d * hh;
+				double Dr = dr * rr; 
 				double qq = q(i, mode);
 				double pp = p(i, mode);
 				double ph = phase(i, mode);
@@ -1530,7 +1862,7 @@ double slab_fl_mode_A::TE_TM(double x, int i, bool mode)
 				}
 				else {
 					// x > D
-					return ((cos((rr * dr) + ph) / cos(ph))*exp(qq * (dr - x)));
+					return ((cos( Dr + ph) / cos(ph) )*exp(qq * (dr - x)));
 				}
 			}
 		}
@@ -1546,6 +1878,77 @@ double slab_fl_mode_A::TE_TM(double x, int i, bool mode)
 	catch (std::invalid_argument &e) {
 		useful_funcs::exit_failure_output(e.what());
 		exit(EXIT_FAILURE);
+	}
+}
+
+void slab_fl_mode_A::output_modes(bool mode, int N, double Lx, std::string& storage_directory)
+{
+	// This function will calculate the solutions corresponding to each mode and output them to a file for a single polarisation
+
+	double xi;
+
+	std::string filename;
+
+	std::string pol = (mode ? "TE" : "TM");
+
+	std::ofstream write;
+
+	if (nbeta(mode) > 0) {
+
+		std::vector< std::vector< double > > mat;
+
+		mat.resize(nbeta(mode) + 2); // We want to output M solutions plus the corresponding positions
+
+		double dx = Lx / (static_cast<double>(N - 1));
+
+		xi = -0.5 * Lx;
+
+		mat[0].resize(N + 2);
+
+		// store the position values in the array
+		for (int j = 1; j <= N; j++) {
+			mat[0][j] = xi;
+			xi += dx;
+		}
+
+		// store the computed field values in the array
+		for (int i = 1; i <= nbeta(mode); i++) {
+			mat[i].resize(N + 2);
+			for (int j = 1; j <= N; j++) {
+				mat[i][j] = TE_TM(mat[0][j], i - 1, mode);
+			}
+		}
+
+		// normalise the field values to have max-val = 1
+		for (int i = 1; i <= nbeta(mode); i++) {
+			// determine the norm of the mode stored in row i
+			double norm = vecut::inf_norm(mat[i]); 
+			for (int j = 1; j <= N; j++) {
+				mat[i][j] /= norm;
+			}
+		}
+
+		// Output all the modes to a single file
+		filename = storage_directory + pol + "_Mode_Profiles_FL_A.txt";
+		write.open(filename.c_str(), std::ios_base::out | std::ios_base::trunc);
+
+		if (write.is_open()) {
+
+			for (int i = 1; i <= N; i++) {
+				for (int j = 0; j < (nbeta(mode) + 1); j++)
+					if (j == nbeta(mode))
+						write << std::setprecision(20) << mat[j][i];
+					else
+						write << std::setprecision(20) << mat[j][i] << " , ";
+				write << "\n";
+			}
+
+			write.close();
+
+		}
+
+		// output the dispersion equation for the case A four layer slab
+		output_disp_eqn_aa(mode, storage_directory); 
 	}
 }
 
@@ -1636,7 +2039,7 @@ void slab_fl_neff_B::set_params(double width, double rib_width, double lambda, d
 			V = (PI*d*na) / l; // V-parameter
 
 			// predicted number of modes
-			M = static_cast<int>(std::max(1.0, ceil((2.0*V / PI))));
+			M = static_cast<int>(std::max(1.0, floor((2.0*V / PI))));
 
 			lower = k * nm; // lower bound of search space
 
@@ -1695,7 +2098,7 @@ double slab_fl_neff_B::eigeneqn_b(double x, int mm, bool t)
 
 			tmp = x_sqr - k_sqr_ncl_sqr;
 			q = (tmp > 0 ? sqrt(tmp) : 0.0);
-			//if (!t) q *= etarcl; // multiply q by etarcl in the case of TM polarisation
+			if (!t) q *= etarcl; // multiply q by etarcl in the case of TM polarisation
 
 			tmp = x_sqr - k_sqr_nr_sqr;
 			r = (tmp > 0 ? sqrt(tmp) : 0.0);
@@ -1751,7 +2154,7 @@ double slab_fl_neff_B::zbrent(double x1, double x2, double tol, bool t, int mm)
 
 			double a = std::min(x1, x2), b = std::max(x1, x2), c = std::max(x1, x2), d, e, min1, min2;
 			double fc, p, q, r, s, tol1, xm;
-			double fa = eigeneqn_b(a, t, mm), fb = eigeneqn_b(b, t, mm);
+			double fa = eigeneqn_b(a, mm, t), fb = eigeneqn_b(b, mm, t);
 
 			if ((fa>0.0 && fb>0.0) || (fa<0.0 && fb<0.0)) {
 				std::cerr << "Root must be bracketed in zbrent\n";
@@ -1774,10 +2177,10 @@ double slab_fl_neff_B::zbrent(double x1, double x2, double tol, bool t, int mm)
 				tol1 = 2.0*EPS*fabs(b) + 0.5*tol;
 				xm = 0.5*(c - b);
 				if (fabs(xm) <= tol1 || fb == 0.0) return b;
-				/*if(fabs(xm)<=tol1 || fb==0.0){
-				std::cout<<"Brent's Method converged in "<<iter<<" iterations\n";
-				return b;
-				}*/
+				if(fabs(xm)<=tol1 || fb==0.0){
+					std::cout<<"Brent's Method converged in "<<iter<<" iterations\n";
+					return b;
+				}
 				if (fabs(e) >= tol1 && fabs(fa)>fabs(fb)) {
 					s = fb / fa;
 					if (a == c) {
@@ -1815,7 +2218,7 @@ double slab_fl_neff_B::zbrent(double x1, double x2, double tol, bool t, int mm)
 				else {
 					b += template_funcs::SIGN(tol1, xm);
 				}
-				fb = eigeneqn_b(b, t, mm);
+				fb = eigeneqn_b(b, mm, t);
 			}
 			std::cerr << "Maximum number of iterations exceeded in zbrent\n";
 			return 0.0;
@@ -1879,6 +2282,76 @@ void slab_fl_neff_B::neff_search(bool mode)
 		}
 	}
 	catch (std::range_error &e) {
+		useful_funcs::exit_failure_output(e.what());
+		exit(EXIT_FAILURE);
+	}
+}
+
+void slab_fl_neff_B::output_disp_eqn_b(bool mode, std::string& storage_directory)
+{
+	// Output the case A four-layer slab dispersion equation
+	// R. Sheehan 18 - 12 - 2020
+
+	try {
+		if (lower < upper) {
+			int N = 101;
+
+			// create array to hold dispersion equations for all the modes
+			std::vector< std::vector< double > > mat;
+
+			mat.resize(M + 2); // We want to output M solutions plus the corresponding positions
+
+			// store the positions at which the eigeneqn_a will be evaluated
+			double dx = (upper - lower) / (static_cast<double>(N - 1));
+
+			double xi = lower;
+
+			mat[0].resize(N + 2);
+
+			for (int j = 1; j <= N; j++) {
+				mat[0][j] = xi;
+				xi += dx;
+			}
+
+			// compute the values of the dispersion equation for each of the expected modes
+			for (int i = 1; i <= M; i++) {
+				mat[i].resize(N + 2);
+				for (int j = 1; j <= N; j++) {
+					mat[i][j] = eigeneqn_b(mat[0][j], i - 1, mode);
+				}
+			}
+
+			// Output the computed dispersion equations
+			std::string pol = (mode ? "TE" : "TM");
+			std::string filename = storage_directory + pol + "_Disp_Eqns_FL_B.txt";
+			std::ofstream write;
+
+			write.open(filename.c_str(), std::ios_base::out | std::ios_base::trunc);
+
+			if (write.is_open()) {
+
+				for (int i = 1; i <= N; i++) {
+					for (int j = 0; j < (M + 1); j++)
+						if (j == M)
+							write << std::setprecision(20) << mat[j][i];
+						else
+							write << std::setprecision(20) << mat[j][i] << " , ";
+					write << "\n";
+				}
+
+				write.close();
+			}
+
+			mat.clear();
+		}
+		else {
+			std::string reason = "Error: void slab_fl_neff_B::output_disp_eqn(bool mode)\n";
+			reason += "Search range is not correctly defined\n";
+			reason += "lower = " + template_funcs::toString(lower, 4) + ", upper = " + template_funcs::toString(upper, 4) + "\n";
+			throw std::range_error(reason);
+		}
+	}
+	catch (std::range_error& e) {
 		useful_funcs::exit_failure_output(e.what());
 		exit(EXIT_FAILURE);
 	}
@@ -1948,11 +2421,11 @@ double slab_fl_neff_B::get_neff(int i, bool mode)
 			return 0;
 		}
 	}
-	catch (std::range_error &e) {
+	catch (std::range_error& e) {
 		std::cerr << e.what();
 		return 0;
 	}
-	catch (std::invalid_argument &e) {
+	catch (std::invalid_argument& e) {
 		useful_funcs::exit_failure_output(e.what());
 		exit(EXIT_FAILURE);
 	}
@@ -1978,8 +2451,8 @@ void slab_fl_mode_B::compute_neff(bool mode)
 	std::string pol = (mode ? "TE" : "TM");
 
 	std::cout << "There are " << nbeta(mode) << " calculated " + pol + " modes\n";
-	for (int i = 0; i < static_cast<int>(nbeta(mode)); i++) {
-		std::cout << "beta[" << i + 1 << "] = " << std::setprecision(9) << _beta(i, mode) << ", " << _beta(i, mode) / k << "\n";
+	for (int i = 0; i<static_cast<int>(nbeta(mode)); i++) {
+		std::cout << "beta[" << i + 1 << "] = " << std::setprecision(9) << _beta(i, mode) << ", "<< _beta(i, mode) / k << "\n";
 	}
 	std::cout << "\n";
 }
@@ -1999,13 +2472,17 @@ double slab_fl_mode_B::phase(int i, bool t)
 			else {
 				if (t) {
 					double qq = q(i, t);
-					double rr = r(i, t);
-					return -1.0 * ((dr * rr) + atanh(qq / rr));
+					double rr = rB(i, t); 
+					double arg = qq / rr; 
+					double atval = fabs(arg) > 1 ? PI_2 : atanh(arg); 
+					return -1.0*( ( dr * rr ) + atval );
 				}
 				else {
 					double qq = q(i, t);
-					double rr = r(i, t);
-					return -1.0 * ((dr * rr) + atanh((etarcl * qq) / rr));
+					double rr = rB(i, t);
+					double arg = ( (etarcl * qq) / rr);
+					double atval = fabs(arg) > 1 ? PI_2 : atanh(arg);
+					return -1.0*( ( dr * rr ) + atval);
 				}
 			}
 		}
@@ -2014,17 +2491,17 @@ double slab_fl_mode_B::phase(int i, bool t)
 			return 0;
 		}
 	}
-	catch (std::range_error& e) {
+	catch (std::range_error &e) {
 		std::cerr << e.what();
 		return 0;
 	}
-	catch (std::invalid_argument& e) {
+	catch (std::invalid_argument &e) {
 		useful_funcs::exit_failure_output(e.what());
 		exit(EXIT_FAILURE);
 	}
 }
 
-double slab_fl_mode_B::TE_TM(double x, int i, bool mode)
+double slab_fl_mode_B::TE_TM(double x, int i, bool mode) 
 {
 	// shape of waveguide mode
 	// Function which defines the shape of the modes for Type B four layer slab
@@ -2033,35 +2510,35 @@ double slab_fl_mode_B::TE_TM(double x, int i, bool mode)
 
 	// https://www.smbc-comics.com/comic/cure
 
-	try {
+	try {		
 		if (nbeta(mode) > 0) {
 			if (i<0 || i > nbeta(mode)) {
 				throw std::range_error("Error: double slab_fl_mode_B::TE_TM(double x,int i,bool mode)\n Attempting to access arrays out of range\n");
 				return 0;
 			}
 			else {
-				double hh = h(i, mode);
-				double rr = r(i, mode);
+				double hh = h(i, mode); 
+				double rr = rB(i, mode); 
 				double wh = d * hh;
 				double qq = q(i, mode);
-				double pp = p(i, mode);
-				double ph = phase(i, mode);
-				double rrhh = mode ? (rr / hh) * tan(ph) : (rr / hh) * tan(ph) * etacr;
+				double pp = p(i, mode); 
+				double ph = phase(i, mode); 
+				double rrhh = mode ? (rr / hh) * tanh(ph) : (rr / hh) * tanh(ph) * etacr;
 				if (x < -d) {
 					// x < -W
-					return ((cos(wh) + (rrhh * sin(wh))) * exp(pp * (x + d)));
+					return ( ( cos(wh) - ( rrhh * sin(wh) ) )*exp( pp * ( x + d ) ) );
 				}
 				else if (x >= -d && x <= 0) {
 					// -W < x < 0
-					return (cos(hh * x) - rrhh * sin(hh * x));
+					return ( cos( hh * x ) + rrhh * sin( hh * x ) ); 
 				}
 				else if (x > 0 && x <= dr) {
 					// 0 < x < D
-					return (cosh((rr * x) + ph) / cosh(ph));
+					return ( cosh( (rr * x) + ph) / cosh(ph) ); 
 				}
 				else {
 					// x > D
-					return ((cosh((rr * dr) + ph) / cosh(ph)) * exp(qq * (dr - x)));
+					return ( ( cosh( (rr * dr) + ph) / cosh(ph) )*exp( qq * ( dr - x ) ) ); 
 				}
 			}
 		}
@@ -2070,13 +2547,72 @@ double slab_fl_mode_B::TE_TM(double x, int i, bool mode)
 			return 0;
 		}
 	}
-	catch (std::range_error& e) {
+	catch (std::range_error &e) {
 		std::cerr << e.what();
 		return 0;
 	}
-	catch (std::invalid_argument& e) {
+	catch (std::invalid_argument &e) {
 		useful_funcs::exit_failure_output(e.what());
 		exit(EXIT_FAILURE);
+	}
+}
+
+void slab_fl_mode_B::output_modes(bool mode, int N, double Lx, std::string& storage_directory)
+{
+	// This function will calculate the solutions corresponding to each mode and output them to a file for a single polarisation
+
+	double xi;
+
+	std::string filename;
+
+	std::string pol = (mode ? "TE" : "TM");
+
+	std::ofstream write;
+
+	if (nbeta(mode) > 0) {
+
+		std::vector< std::vector< double > > mat;
+
+		mat.resize(nbeta(mode) + 2); // We want to output M solutions plus the corresponding positions
+
+		double dx = Lx / (static_cast<double>(N - 1));
+
+		xi = -0.5 * Lx;
+
+		mat[0].resize(N + 2);
+
+		for (int j = 1; j <= N; j++) {
+			mat[0][j] = xi;
+			xi += dx;
+		}
+
+		for (int i = 1; i <= nbeta(mode); i++) {
+			mat[i].resize(N + 2);
+			for (int j = 1; j <= N; j++) {
+				mat[i][j] = TE_TM(mat[0][j], i - 1, mode);
+			}
+		}
+
+		// Output all the modes to a single file
+		filename = storage_directory + pol + "_Mode_Profiles_FL_B.txt";
+		write.open(filename.c_str(), std::ios_base::out | std::ios_base::trunc);
+
+		if (write.is_open()) {
+
+			for (int i = 1; i <= N; i++) {
+				for (int j = 0; j < (nbeta(mode) + 1); j++)
+					if (j == nbeta(mode))
+						write << std::setprecision(20) << mat[j][i];
+					else
+						write << std::setprecision(20) << mat[j][i] << " , ";
+				write << "\n";
+			}
+
+			write.close();
+
+		}
+
+		output_disp_eqn_b(mode, storage_directory);
 	}
 }
 
@@ -2085,21 +2621,21 @@ double slab_fl_mode_B::TE_TM(double x, int i, bool mode)
 coupled_slab_tl_neff::coupled_slab_tl_neff()
 {
 	// Default
-	slab_sep = coupling_coeff = L_coupling = 0.0;
+	slab_sep = coupling_coeff = L_coupling = 0.0; 
 }
 
 coupled_slab_tl_neff::coupled_slab_tl_neff(double separation, double width, double lambda, double ncore, double nsub)
 {
 	// Assign value to the slab parameters
 
-	set_params(separation, width, lambda, ncore, nsub);
+	set_params(separation, width, lambda, ncore, nsub); 
 }
 
 void coupled_slab_tl_neff::set_params(double separation, double width, double lambda, double ncore, double nsub)
 {
 	// Assign values to the parameters for the coupled slab structure
 
-	try {
+	try {	
 		if (separation > 0.0) {
 			slab_tl_neff::set_params(width, lambda, ncore, nsub, nsub);
 
@@ -2109,10 +2645,10 @@ void coupled_slab_tl_neff::set_params(double separation, double width, double la
 			throw std::invalid_argument("Error: coupled_slab_tl_neff::set_params(double separation, double width, double lambda, double ncore, double nsub)\nSeparation < 2 Width\n");
 		}
 	}
-	catch (std::invalid_argument& e) {
+	catch (std::invalid_argument &e) {
 		useful_funcs::exit_failure_output(e.what());
 		exit(EXIT_FAILURE);
-	}
+	} 
 }
 
 double coupled_slab_tl_neff::compute_coupling_coeff(bool mode)
@@ -2127,28 +2663,28 @@ double coupled_slab_tl_neff::compute_coupling_coeff(bool mode)
 
 		if (nbeta(mode) > 0) {
 
-			double tt = d / 2;
-			double hh = h(0, mode);
+			double tt = d / 2; 
+			double hh = h(0, mode); 
 			double pp = p(0, mode);
 			double vs = template_funcs::DSQR(k * na);
-			double num = template_funcs::DSQR(hh * pp);
-			double denom = _beta(0, mode) * (1.0 + (tt * pp)) * vs;
-			double arg = -1.0 * pp * (slab_sep - d);
-
+			double num = template_funcs::DSQR(hh * pp); 
+			double denom = _beta(0, mode)*(1.0 + ( tt * pp ) )*vs;
+			double arg = -1.0 * pp * (slab_sep - d); 
+			
 			if (denom > 0) {
-				return ((num / denom) * exp(arg));
+				return ( (num / denom)* exp(arg) );
 			}
 			else {
 				throw std::runtime_error("Error: double coupled_slab_tl_neff::compute_coupling_coeff(bool mode)\nDivision by zero occurred\n");
-				return 0.0;
+				return 0.0; 
 			}
 		}
 		else {
-			throw std::runtime_error("Error: double coupled_slab_tl_neff::compute_coupling_coeff(bool mode)\nNo modes computed for this waveguide\n");
+			throw std::runtime_error("Error: double coupled_slab_tl_neff::compute_coupling_coeff(bool mode)\nNo modes computed for this waveguide\n"); 
 			return 0;
 		}
 	}
-	catch (std::runtime_error& e) {
+	catch (std::runtime_error &e) {
 		useful_funcs::exit_failure_output(e.what());
 		exit(EXIT_FAILURE);
 	}
@@ -2158,12 +2694,12 @@ double coupled_slab_tl_neff::compute_coupling_coeff(bool mode)
 coupled_slabs::coupled_slabs()
 {
 	// default constructor
-	wg_defined = false; coeffs_defined = false;
+	wg_defined = false; coeffs_defined = false; 
 	pol = TE; // going to assume TE polarisation for all calcs for simplicity
-	msize = 2;
+	msize = 2; 
 	min_pitch = de_A = de_B = omega = wavenum = cw1 = cw2 = WA = WB = n_core_A = n_core_B = n_sub = wavel = 0.0;
-	CAA = CBB = CAB = norm = KAA = KBB = KAB = KBA = ga = gb = kab = kba = async = 0.0;
-	bp = bm = phi = psi = del = Lc = 0.0;
+	CAA = CBB = CAB = norm = KAA = KBB = KAB = KBA = ga = gb = kab = kba = async = 0.0; 
+	bp = bm = phi = psi = del = Lc = 0.0; 
 }
 
 coupled_slabs::coupled_slabs(double W1, double W2, double lambda, double ncore1, double ncore2, double nsub)
@@ -2175,60 +2711,62 @@ coupled_slabs::coupled_slabs(double W1, double W2, double lambda, double ncore1,
 void coupled_slabs::set_params(double W1, double W2, double lambda, double ncore1, double ncore2, double nsub)
 {
 	// Method for assigning values to each of the WG
-
+	
 	try {
-		bool c1 = W1 > 0.0 ? true : false;
-		bool c2 = W2 > 0.0 ? true : false;
-		bool c4 = lambda > 0.0 ? true : false;
-		bool c5 = nsub > 0.0 ? true : false;
-		bool c6 = ncore1 > nsub ? true : false;
-		bool c7 = ncore2 > nsub ? true : false;
-		bool c10 = c1 && c2 && c4 && c5 && c6 && c7;
-
+		bool c1 = W1 > 0.0 ? true : false; 
+		bool c2 = W2 > 0.0 ? true : false; 
+		bool c4 = lambda > 0.0 ? true : false; 
+		bool c5 = nsub > 0.0 ? true : false; 
+		bool c6 = ncore1 > nsub ? true : false; 
+		bool c7 = ncore2 > nsub ? true : false; 
+		bool c10 = c1 && c2 && c4 && c5 && c6 && c7; 
+		
 		if (c10) {
 
 			// store the parameters locally for an easy life
-			WA = W1; WB = W2; n_core_A = ncore1; n_core_B = ncore2; n_sub = nsub; wavel = lambda;
+			WA = W1; WB = W2; n_core_A = ncore1; n_core_B = ncore2; n_sub = nsub; wavel = lambda; 
 
 			min_pitch = 0.5 * (WA + WB);
-
+			
 			// w = k * SPEED_OF_LIGHT; 
-			wavenum = Two_PI / wavel;
+			wavenum = Two_PI / wavel; 
 
-			omega = (SPEED_OF_LIGHT * wavenum);
-
-			cw1 = (EPSILON * omega) / 4.0; // constant required in calculation
-
+			omega = ( SPEED_OF_LIGHT * wavenum ); 
+			
+			cw1 = ( EPSILON * omega ) / 4.0; // constant required in calculation
+			
 			cw2 = 2.0 * omega * MU; // constant required in calculation
 			
-			de_A = (cw1 * template_funcs::SQR_DIFF(n_core_B, n_sub));
+			//de_A = ( cw1 * ( template_funcs::DSQR(n_core_B) - template_funcs::DSQR(n_sub) ) ) ;
+			de_A = ( cw1 * template_funcs::SQR_DIFF(n_core_B, n_sub) ) ;
 
-			de_B = (cw1 * template_funcs::SQR_DIFF(n_core_A, n_sub));
+			//de_B = ( cw1 * ( template_funcs::DSQR(n_core_A) - template_funcs::DSQR(n_sub) ) ) ;
+			de_B = ( cw1 * template_funcs::SQR_DIFF(n_core_A, n_sub) ) ;
 
 			WGA.set_params(W1, lambda, ncore1, nsub, nsub); // assign the parameters to the slab object
-
+			
 			WGA.compute_neff(pol); // compute the effective indices of that slab
-
+			
 			WGB.set_params(W2, lambda, ncore2, nsub, nsub); // assign the parameters to the slab object
-
+			
 			WGB.compute_neff(pol); // compute the effective indices of that slab
 
-			wg_defined = true;
+			wg_defined = true; 
 		}
 		else {
 			std::string reason = "Error: void coupled_slabs::set_params(double W1, double W2, double separ, double lambda, double ncore1, double ncore2, double nsub)\n";
 			if (!c1) reason += "WGA width = " + template_funcs::toString(W1, 3) + " is negative\n";
 			if (!c2) reason += "WGB width = " + template_funcs::toString(W2, 3) + " is negative\n";
 			if (!c4) reason += "Wavelength = " + template_funcs::toString(lambda, 3) + " is negative\n";
-
+			
 			if (!c5) reason += "Substrate Index = " + template_funcs::toString(nsub, 3) + " is too small\n";
-			if (!c6) reason += "WGA Index = " + template_funcs::toString(ncore1, 3) + " is too small\n";
-			if (!c7) reason += "WGB Index = " + template_funcs::toString(ncore2, 3) + " is too small\n";
+			if (!c6) reason += "WGA Index = " + template_funcs::toString(ncore1, 3) + " is too small\n";			
+			if (!c7) reason += "WGB Index = " + template_funcs::toString(ncore2, 3) + " is too small\n";			
 
 			throw std::invalid_argument(reason);
 		}
 	}
-	catch (std::invalid_argument& e) {
+	catch (std::invalid_argument & e) {
 		useful_funcs::exit_failure_output(e.what());
 		exit(EXIT_FAILURE);
 	}
@@ -2239,7 +2777,7 @@ void coupled_slabs::compute_coefficients(double pitch, bool loud)
 	// Compute the various coupling coefficients
 
 	try {
-
+		
 		// Start by checking that you can plot the mode profiles together with the correct separations
 		// Then check that you can integrate the mode profiles over an appropriate range
 		// Then test calculation of C and K
@@ -2248,61 +2786,61 @@ void coupled_slabs::compute_coefficients(double pitch, bool loud)
 
 		if (c3 && wg_defined) {
 
-			bool loud_integral = false;
-			bool scale_integral = true;
+			bool loud_integral = false; 
+			bool scale_integral = true; 
 
 			// overlap integrals
 			CAA = integrate_CAA(pitch, scale_integral, loud_integral);
 			CBB = integrate_CBB(pitch, scale_integral, loud_integral);
 			CAB = integrate_CAB(pitch, scale_integral, loud_integral);
-			norm = CAA + CBB;
-			CAB /= norm;
-
+			norm = CAA + CBB; 
+			CAB /= norm; 
+			
 			// coupling coefficients
 			KAA = integrate_KAA(pitch, scale_integral, loud_integral);
 			KBB = integrate_KBB(pitch, scale_integral, loud_integral);
 			KAB = integrate_KAB(pitch, scale_integral, loud_integral);
 			KBA = integrate_KBA(pitch, scale_integral, loud_integral);
 
-			KAA /= norm; KBB /= norm; KAB /= norm; KBA /= norm;
+			KAA /= norm; KBB /= norm; KAB /= norm; KBA /= norm; 
 
 			// propagation matrix elements
-			double bA, bB, numer;
-			numer = 1.0 - template_funcs::DSQR(CAB);
-			bA = WGA.get_neff(0, pol) * wavenum;
-			bB = WGB.get_neff(0, pol) * wavenum;
-
-			ga = bA + ((KAA - CAB * KBA) / numer);
-			gb = bB + ((KBB - CAB * KAB) / numer);
-			kab = ((KAB - CAB * KBB) / numer);
-			kba = ((KBA - CAB * KAA) / numer);
+			double bA, bB, numer; 
+			numer = 1.0 - template_funcs::DSQR(CAB); 
+			bA = WGA.get_neff(0, pol) * wavenum; 
+			bB = WGB.get_neff(0, pol) * wavenum; 			
+			
+			ga = bA + ((KAA - CAB * KBA) / numer); 
+			gb = bB + ((KBB - CAB * KAB) / numer); 
+			kab = ((KAB - CAB * KBB) / numer); 
+			kba = ((KBA - CAB * KAA) / numer); 
 
 			// asynchronism factor
-			async = (gb - ga) / (2.0 * sqrt(kab * kba));
+			async = (gb - ga) / (2.0 * sqrt(kab * kba)); 
 
 			// propagation constants in coupled waveguides
-			phi = 0.5 * (ga + gb);
-			del = 0.5 * (gb - ga);
-			psi = sqrt(template_funcs::DSQR(del) + kab * kba);
-			bp = phi + psi;
-			bm = phi - psi;
-			Lc = PI / fabs(bm - bp);
+			phi = 0.5 * (ga + gb); 
+			del = 0.5 * (gb - ga); 
+			psi = sqrt(template_funcs::DSQR(del) + kab * kba); 
+			bp = phi + psi; 
+			bm = phi - psi; 
+			Lc = PI / fabs(bm - bp); 
 
-			double t1 = del + psi;
-			double t2 = psi - del;
+			double t1 = del + psi; 
+			double t2 = psi - del; 
 
 			// compute the elements of the matrices V and Vinv
-			V = vecut::zero_cmat(msize, msize);
+			V = vecut::zero_cmat(msize, msize); 
 			Vinv = vecut::zero_cmat(msize, msize);
 
-			V[0][0] = kab; V[0][1] = kab;
-			V[1][0] = -1.0 * t1; V[1][1] = t2;
+			V[0][0] = kab; V[0][1] = kab; 
+			V[1][0] = -1.0 * t1; V[1][1] = t2; 
 
-			double detV = 2.0 * kab * psi;
-			Vinv[0][0] = t2 / detV; Vinv[1][1] = kab / detV;
-			Vinv[1][0] = t1 / detV; Vinv[0][1] = -1.0 * Vinv[1][1];
+			double detV = 2.0 * kab * psi; 
+			Vinv[0][0] = t2 / detV; Vinv[1][1] = kab / detV; 
+			Vinv[1][0] = t1 / detV; Vinv[0][1] = -1.0 * Vinv[1][1]; 
 
-			coeffs_defined = true;
+			coeffs_defined = true; 
 
 			if (loud) {
 				std::cout << "Computed Coefficients\n";
@@ -2336,18 +2874,18 @@ void coupled_slabs::compute_coefficients(double pitch, bool loud)
 				std::cout << "Asynchronism\n";
 				std::cout << "d = " << async << "\n\n";
 
-				std::cout << "Propagation constants\n";
-				std::cout << "bp = " << bp << " um^{-1}\n";
-				std::cout << "bm = " << bm << "um^{-1}\n\n";
+				std::cout << "Propagation constants\n"; 
+				std::cout << "bp = " << bp << " um^{-1}\n"; 
+				std::cout << "bm = " << bm << "um^{-1}\n\n"; 
 
-				std::cout << "Coupling Length\n";
-				std::cout << "Lc = " << Lc << "um\n\n";
+				std::cout << "Coupling Length\n"; 
+				std::cout << "Lc = " << Lc << "um\n\n"; 
 
-				std::cout << "Matrix V\n";
-				vecut::print_cmat(V);
-				std::cout << "\n";
+				std::cout << "Matrix V\n"; 
+				vecut::print_cmat(V); 
+				std::cout << "\n"; 
 
-				std::cout << "det(V) = " << detV << "\n\n";
+				std::cout << "det(V) = " << detV << "\n\n"; 
 
 				std::cout << "Matrix V^{-1}\n";
 				vecut::print_cmat(Vinv);
@@ -2356,14 +2894,14 @@ void coupled_slabs::compute_coefficients(double pitch, bool loud)
 		}
 		else {
 			std::string reason = "Error: void coupled_slabs::compute_coefficients(double pitch)\n";
-			if (!wg_defined) reason += "WG parameters are not defined\n";
+			if (!wg_defined) reason += "WG parameters are not defined\n"; 
 			if (!c3) reason += "WG pitch = " + template_funcs::toString(pitch, 3) + " is too small\n";
 			if (!c3) reason += "min pitch = " + template_funcs::toString(min_pitch, 3) + "\n";
-
+			
 			throw std::invalid_argument(reason);
 		}
 	}
-	catch (std::invalid_argument& e) {
+	catch (std::invalid_argument & e) {
 		useful_funcs::exit_failure_output(e.what());
 		exit(EXIT_FAILURE);
 	}
@@ -2372,18 +2910,18 @@ void coupled_slabs::compute_coefficients(double pitch, bool loud)
 void coupled_slabs::output_modes(double pitch)
 {
 	// output the modes in the same file separated by their pitch
-
+	
 	try {
 
 		bool c3 = pitch > min_pitch ? true : false;
 
 		if (c3 && wg_defined) {
-			int N = 501;
+			int N = 501; 
 			double Lx = 2.5 * (WA + pitch + WB); // total length of simulation region
 			double xmid = 0.5 * pitch + 0.25 * (WA + WB); // midpoint of simulation region
 			double x0 = xmid - 0.5 * Lx; // start computing solutions here
-			double dx = Lx / (N - 1);
-			double vA, vB;
+			double dx = Lx / (N - 1); 
+			double vA, vB; 
 
 			std::string filename = "Coupled_Mode_Profiles.txt";
 			std::ofstream write;
@@ -2391,21 +2929,21 @@ void coupled_slabs::output_modes(double pitch)
 			write.open(filename.c_str(), std::ios_base::out | std::ios_base::trunc);
 
 			if (write.is_open()) {
-
+				
 				for (int i = 0; i < N; i++) {
-					vA = WGA.TE_TM(x0, 0, pol);
-					vB = WGB.TE_TM(x0 - pitch, 0, pol);
-					write << std::setprecision(10) << x0 << " , " << vA << " , " << vB << "\n";
+					vA = WGA.TE_TM(x0, 0, pol); 
+					vB = WGB.TE_TM(x0 - pitch, 0, pol); 
+					write << std::setprecision(10) << x0 << " , " << vA << " , " << vB << "\n"; 
 
 					// store the field values for later use
-					Afield.push_back(std::complex<double>(vA, 0.0));
-					Bfield.push_back(std::complex<double>(vB, 0.0));
-					pos.push_back(x0);
+					Afield.push_back(std::complex<double>(vA, 0.0)); 
+					Bfield.push_back(std::complex<double>(vB, 0.0)); 
+					pos.push_back(x0); 
 
-					x0 += dx;
+					x0 += dx; 
 				}
 
-				write.close();
+				write.close(); 
 			}
 		}
 		else {
@@ -2568,13 +3106,13 @@ void coupled_slabs::output_modes(double pitch)
 double coupled_slabs::integrate_CAA(double pitch, bool scale, bool loud)
 {
 	// compute the overlap integral of E_{ay} E_{ay}
-
+	
 	try {
 		//bool c1 = fabs(x2 - x1) > EPS ? true : false;
 		//bool c3 = pitch > 0.5 * (WA + WB) ? true : false;
 		//bool c10 = c1 && c3;
 
-		bool c3 = true;
+		bool c3 = true; 
 
 		if (c3 && wg_defined) {
 			int N = 501;
@@ -2594,7 +3132,7 @@ double coupled_slabs::integrate_CAA(double pitch, bool scale, bool loud)
 			// Evaluate the integral using the trapezoidal rule
 
 			// compute first term in the sum
-			first = template_funcs::DSQR(WGA.TE_TM(x0, 0, pol));
+			first = template_funcs::DSQR( WGA.TE_TM(x0, 0, pol) );
 
 			// update position
 			x0 += dx;
@@ -2603,10 +3141,10 @@ double coupled_slabs::integrate_CAA(double pitch, bool scale, bool loud)
 			for (int i = 1; i < N - 1; i++) {
 
 				if (loud) {
-					write << std::setprecision(10) << x0 << " , " << WGA.TE_TM(x0, 0, pol) << " , " << WGB.TE_TM(x0, 0, pol) << "\n";
+					write << std::setprecision(10) << x0 << " , " << WGA.TE_TM(x0, 0, pol) << " , " << WGB.TE_TM(x0 , 0, pol) << "\n";
 				}
 
-				term = template_funcs::DSQR(WGA.TE_TM(x0, 0, pol));
+				term = template_funcs::DSQR( WGA.TE_TM(x0, 0, pol) );
 
 				sum += term;
 
@@ -2615,15 +3153,15 @@ double coupled_slabs::integrate_CAA(double pitch, bool scale, bool loud)
 			}
 
 			if (loud) {
-				write.close();
+				write.close(); 
 			}
 
 			// compute last term in the sum
-			last = template_funcs::DSQR(WGA.TE_TM(x0, 0, pol));
+			last = template_funcs::DSQR( WGA.TE_TM(x0, 0, pol) );
 
 			integral = 0.5 * dx * (first + last + 2.0 * sum);
 
-			if (scale) integral *= (WGA.get_neff(0, pol) * wavenum) / cw2;
+			if(scale) integral *= ( WGA.get_neff(0, pol) * wavenum ) / cw2; 
 
 			return integral;
 		}
@@ -2653,7 +3191,7 @@ double coupled_slabs::integrate_CBB(double pitch, bool scale, bool loud)
 		//bool c3 = pitch > 0.5 * (WA + WB) ? true : false;
 		//bool c10 = c1 && c3;
 
-		bool c3 = true;
+		bool c3 = true; 
 
 		if (c3 && wg_defined) {
 			int N = 501;
@@ -2703,7 +3241,7 @@ double coupled_slabs::integrate_CBB(double pitch, bool scale, bool loud)
 
 			integral = 0.5 * dx * (first + last + 2.0 * sum);
 
-			if (scale) integral *= (WGB.get_neff(0, pol) * wavenum) / cw2;
+			if(scale) integral *= (WGB.get_neff(0, pol) * wavenum) / cw2;
 
 			return integral;
 		}
@@ -2732,7 +3270,7 @@ double coupled_slabs::integrate_CAB(double pitch, bool scale, bool loud)
 	try {
 		//bool c3 = pitch > 0.5 * (WA + WB) ? true : false;
 
-		bool c3 = true;
+		bool c3 = true; 
 
 		if (c3 && wg_defined) {
 			int N = 501;
@@ -2753,7 +3291,7 @@ double coupled_slabs::integrate_CAB(double pitch, bool scale, bool loud)
 			// Evaluate the integral using the trapezoidal rule
 
 			// compute first term in the sum
-			first = (WGA.TE_TM(x0, 0, pol) * WGB.TE_TM(xoff, 0, pol));
+			first = ( WGA.TE_TM(x0, 0, pol) * WGB.TE_TM(xoff, 0, pol) );
 
 			// update position
 			x0 += dx;
@@ -2782,11 +3320,11 @@ double coupled_slabs::integrate_CAB(double pitch, bool scale, bool loud)
 			// compute last term in the sum
 			last = (WGA.TE_TM(x0, 0, pol) * WGB.TE_TM(xoff, 0, pol));
 
-			integral = 0.5 * dx * (first + last + 2.0 * sum);
+			integral = 0.5 * dx * (first + last + 2.0 * sum); 
 
-			if (scale) integral *= (0.5 * (WGA.get_neff(0, pol) + WGB.get_neff(0, pol)) * wavenum) / cw2;
+			if(scale) integral *= ( 0.5 * ( WGA.get_neff(0, pol) + WGB.get_neff(0, pol) ) * wavenum) / cw2; 
 
-			integral *= 2.0;
+			integral *= 2.0; 
 
 			return integral;
 		}
@@ -2819,8 +3357,8 @@ double coupled_slabs::integrate_KAA(double pitch, bool scale, bool loud)
 			int N = 501;
 			double Lx = 2.5 * (WA + pitch + WB); // total length of simulation region
 			double dx = Lx / (N - 1);
-			double x0 = pitch - 0.5 * WB;
-			double xend = pitch + 0.5 * WB;
+			double x0 = pitch - 0.5 * WB; 
+			double xend = pitch + 0.5 * WB; 
 			double first, last, term, integral, sum = 0.0;
 
 			std::string filename = "integrate_KAA_field_values.txt";
@@ -2839,7 +3377,7 @@ double coupled_slabs::integrate_KAA(double pitch, bool scale, bool loud)
 			x0 += dx;
 
 			// sum over the middle terms 
-			while (x0 < xend) {
+			while(x0 < xend) {
 
 				if (loud) {
 					write << std::setprecision(10) << x0 << " , " << WGA.TE_TM(x0, 0, pol) << " , " << WGA.TE_TM(x0, 0, pol) << "\n";
@@ -2862,7 +3400,7 @@ double coupled_slabs::integrate_KAA(double pitch, bool scale, bool loud)
 
 			integral = 0.5 * dx * (first + last + 2.0 * sum);
 
-			if (scale) integral *= de_A; // multiply \Delta\epsilon_{a}
+			if(scale) integral *= de_A; // multiply \Delta\epsilon_{a}
 
 			integral *= 2.0;
 
@@ -2897,8 +3435,8 @@ double coupled_slabs::integrate_KBB(double pitch, bool scale, bool loud)
 			int N = 501;
 			double Lx = 2.5 * (WA + pitch + WB); // total length of simulation region
 			double dx = Lx / (N - 1);
-			double x0 = -0.5 * WA; // start computing solutions here
-			double xend = 0.5 * WA; // stop computing solutions here
+			double x0 = -0.5*WA; // start computing solutions here
+			double xend = 0.5*WA; // stop computing solutions here
 			double first, last, term, integral, sum = 0.0;
 
 			std::string filename = "integrate_KBB_field_values.txt";
@@ -2917,10 +3455,10 @@ double coupled_slabs::integrate_KBB(double pitch, bool scale, bool loud)
 			x0 += dx;
 
 			// sum over the middle terms 
-			while (x0 < xend) {
+			while(x0 < xend) {
 
 				if (loud) {
-					write << std::setprecision(10) << x0 << " , " << WGB.TE_TM(x0 - pitch, 0, pol) << " , " << WGB.TE_TM(x0 - pitch, 0, pol) << "\n";
+					write << std::setprecision(10) << x0 << " , " << WGB.TE_TM(x0-pitch, 0, pol) << " , " << WGB.TE_TM(x0 - pitch, 0, pol) << "\n";
 				}
 
 				term = template_funcs::DSQR(WGB.TE_TM(x0 - pitch, 0, pol));
@@ -2940,7 +3478,7 @@ double coupled_slabs::integrate_KBB(double pitch, bool scale, bool loud)
 
 			integral = 0.5 * dx * (first + last + 2.0 * sum);
 
-			if (scale) integral *= de_B; // multiply \Delta\epsilon_{b}
+			if(scale) integral *= de_B; // multiply \Delta\epsilon_{b}
 
 			integral *= 2.0;
 
@@ -2975,8 +3513,8 @@ double coupled_slabs::integrate_KAB(double pitch, bool scale, bool loud)
 			int N = 501;
 			double Lx = 2.5 * (WA + pitch + WB); // total length of simulation region
 			double dx = Lx / (N - 1);
-			double x0 = -0.5 * WA; // start computing solutions here
-			double xend = 0.5 * WA; // stop computing solutions here
+			double x0 = -0.5*WA; // start computing solutions here
+			double xend = 0.5*WA; // stop computing solutions here
 			double xoff = x0 - pitch; // use the offset value to evaluate mode solution in WGB
 			double first, last, term, integral, sum = 0.0;
 
@@ -2997,10 +3535,10 @@ double coupled_slabs::integrate_KAB(double pitch, bool scale, bool loud)
 			xoff += dx;
 
 			// sum over the middle terms 
-			while (x0 < xend) {
+			while(x0 < xend) {
 
 				if (loud) {
-					write << std::setprecision(10) << x0 << " , " << WGA.TE_TM(x0, 0, pol) << " , " << WGB.TE_TM(x0 - pitch, 0, pol) << "\n";
+					write << std::setprecision(10) << x0 << " , " << WGA.TE_TM(x0, 0, pol) << " , " << WGB.TE_TM(x0-pitch, 0, pol) << "\n";
 				}
 
 				term = (WGA.TE_TM(x0, 0, pol) * WGB.TE_TM(x0 - pitch, 0, pol));
@@ -3021,7 +3559,7 @@ double coupled_slabs::integrate_KAB(double pitch, bool scale, bool loud)
 
 			integral = 0.5 * dx * (first + last + 2.0 * sum);
 
-			if (scale) integral *= de_B; // multiply \Delta\epsilon_{b}
+			if(scale) integral *= de_B; // multiply \Delta\epsilon_{b}
 
 			integral *= 2.0;
 
@@ -3102,7 +3640,7 @@ double coupled_slabs::integrate_KBA(double pitch, bool scale, bool loud)
 
 			integral = 0.5 * dx * (first + last + 2.0 * sum);
 
-			if (scale) integral *= de_A; // multiply \Delta\epsilon_{a}
+			if(scale) integral *= de_A; // multiply \Delta\epsilon_{a}
 
 			integral *= 2.0;
 
@@ -3128,9 +3666,9 @@ double coupled_slabs::integrate_KBA(double pitch, bool scale, bool loud)
 void coupled_slabs::define_P(double z, bool loud)
 {
 	// Compute the propagation matrix P at position z along the direction of propagation
-
+	
 	try {
-
+	
 		if (coeffs_defined) {
 
 			P = vecut::zero_cmat(msize, msize);
@@ -3140,14 +3678,14 @@ void coupled_slabs::define_P(double z, bool loud)
 
 			if (loud) {
 				std::cout << "Propagation Matrix M z = " << z << "\n";
-				vecut::print_cmat(P);
-				std::cout << "\n";
+				vecut::print_cmat(P); 
+				std::cout << "\n"; 
 			}
 		}
 		else {
 			std::string reason = "Error: void coupled_slabs::define_P(double z)\n";
 			if (!coeffs_defined) reason += "propagation parameters are not defined\n";
-
+			
 			throw std::invalid_argument(reason);
 		}
 	}
@@ -3166,17 +3704,17 @@ void coupled_slabs::define_M(double z, bool loud)
 		if (coeffs_defined) {
 
 			// define the propagation matrix P
-			define_P(z, loud);
+			define_P(z, loud); 
 
 			// Need to compute the matrix product here
-			std::vector<std::vector<std::complex<double>>> M1;
+			std::vector<std::vector<std::complex<double>>> M1; 
+			
+			M1 = vecut::cmat_cmat_product(V, P); 
 
-			M1 = vecut::cmat_cmat_product(V, P);
-
-			M = vecut::cmat_cmat_product(M1, Vinv);
+			M = vecut::cmat_cmat_product(M1, Vinv); 
 
 			if (loud) {
-				std::cout << "Propagation Matrix M z = " << z << "\n";
+				std::cout << "Propagation Matrix M z = "<<z<<"\n";
 				vecut::print_cmat(M);
 				std::cout << "\n";
 			}
@@ -3200,22 +3738,22 @@ void coupled_slabs::propagate(double length, double step_size, double a0, double
 	// assume initial condition (a0 b0)^{T}
 
 	try {
-		bool c1 = length > 0.0 ? true : false;
-		bool c4 = step_size > 0.0 && step_size <= length ? true : false;
-		bool c2 = a0 >= 0.0 && a0 <= 1.0 ? true : false;
-		bool c3 = b0 >= 0.0 && b0 <= 1.0 ? true : false;
-		bool c10 = c1 && c2 && c3 && c4;
+		bool c1 = length > 0.0 ? true : false; 
+		bool c4 = step_size > 0.0 && step_size <= length ? true : false; 
+		bool c2 = a0 >= 0.0 && a0<= 1.0 ? true : false; 
+		bool c3 = b0 >= 0.0 && b0 <= 1.0 ? true : false; 
+		bool c10 = c1 && c2 && c3 && c4; 
 
 		if (c10 && coeffs_defined) {
 
-			std::vector<std::complex<double>> IC(msize, zero);
-			std::vector<std::complex<double>> AB(msize, zero);
+			std::vector<std::complex<double>> IC(msize, zero); 
+			std::vector<std::complex<double>> AB(msize, zero); 
 
-			IC[0] = a0; IC[1] = b0;
+			IC[0] = a0; IC[1] = b0; 
 
-			int Nsteps = 1 + static_cast<int>(length / step_size);
+			int Nsteps = 1 + static_cast<int>(length / step_size); 
 
-			double z = 0;
+			double z = 0; 
 
 			std::string filename = "Coupled_Mode_Coefficients.txt";
 			std::ofstream write;
@@ -3223,49 +3761,49 @@ void coupled_slabs::propagate(double length, double step_size, double a0, double
 			write.open(filename.c_str(), std::ios_base::out | std::ios_base::trunc);
 
 			for (int i = 0; i < Nsteps; i++) {
-
-				define_M(z, loud);
+				
+				define_M(z, loud); 
 
 				// compute (a(z) b(z))^{T} = M.(a0 b0)^{T}
-				AB = vecut::cmat_cvec_product(M, IC);
+				AB = vecut::cmat_cvec_product(M, IC); 
 
 				if (loud) {
-					std::cout << "(a(z) b(z))^{T} z = " << z << "\n";
-					for (int i = 0; i < msize; i++) std::cout << abs(AB[i]) << "\n";
-					std::cout << "\n\n";
+					std::cout << "(a(z) b(z))^{T} z = " << z << "\n"; 
+					for (int i = 0; i < msize; i++) std::cout << abs(AB[i]) << "\n"; 
+					std::cout << "\n\n"; 
 				}
 
-				write << std::setprecision(10) << z << " , " << abs(AB[0]) << " , " << abs(AB[1]) << "\n";
+				write << std::setprecision(10) << z << " , " << abs(AB[0]) << " , " << abs(AB[1]) << "\n"; 
 
 				// compute the field profile in the waveguide
-				if (i % 10 == 0 && !Afield.empty() && !Bfield.empty() && Afield.size() == Bfield.size()) {
+				if (i%10 == 0 && !Afield.empty() && !Bfield.empty() && Afield.size() == Bfield.size()) {
 
-					std::string fieldfile = "Coupled_Field_dz_" + template_funcs::toString(step_size) + "_step_" + template_funcs::toString(i) + dottxt;
-					std::ofstream writefield;
+					std::string fieldfile = "Coupled_Field_dz_" + template_funcs::toString(step_size) + "_step_" + template_funcs::toString(i) + dottxt; 
+					std::ofstream writefield; 
 
 					writefield.open(fieldfile.c_str(), std::ios_base::out | std::ios_base::trunc);
 
 					for (size_t j = 0; j < Afield.size(); j++) {
-						writefield << std::setprecision(10) << pos[j] << " , " << abs(Afield[j] * AB[0] + Bfield[j] * AB[1]) << "\n";
+						writefield << std::setprecision(10) << pos[j] << " , " << abs( Afield[j]*AB[0] + Bfield[j]*AB[1] ) << "\n";
 					}
 
-					writefield.close();
+					writefield.close(); 
 				}
 
 				// output the results
 
-				z += step_size;
+				z += step_size; 
 			}
 
-			write.close();
+			write.close(); 
 
 		}
 		else {
 			std::string reason = "Error: void coupled_slabs::propagate(double length, double a0, double b0)\n";
-			if (!c1) reason += "length = " + template_funcs::toString(length, 2) + " is not positive\n";
+			if (!c1) reason += "length = " + template_funcs::toString(length, 2) + " is not positive\n"; 
 			if (!c4) reason += "step_size = " + template_funcs::toString(step_size, 2) + " is too large\n";
-			if (!c2) reason += "IC a0 = " + template_funcs::toString(a0, 2) + " is not in range\n";
-			if (!c3) reason += "IC b0 = " + template_funcs::toString(b0, 2) + " is not in range\n";
+			if (!c2) reason += "IC a0 = " + template_funcs::toString(a0, 2) + " is not in range\n"; 
+			if (!c3) reason += "IC b0 = " + template_funcs::toString(b0, 2) + " is not in range\n"; 
 			if (!coeffs_defined) reason += "propagation parameters are not defined\n";
 
 			throw std::invalid_argument(reason);

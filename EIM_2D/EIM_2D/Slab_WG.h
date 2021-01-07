@@ -21,7 +21,9 @@ protected:
 
 	double q(int i, bool t); // wavenumber in cladding
 
-	double r(int i, bool t); // wavenumber in rib
+	double rA(int i, bool t); // wavenumber in rib for case A of FL slab
+
+	double rB(int i, bool t); // wavenumber in rib for case B of FL slab
 
 	double _beta(int i, bool t); // return the computed propagation constants
 
@@ -160,10 +162,21 @@ public:
 	// Methods
 	void set_params(double width, double rib_width, double lambda, double ncore, double nsub, double nclad, double nrib);
 
+	//void neff_search(bool mode); 
 	void neff_search(bool mode); 
 
+	// try and bracket the roots hat exist in the search space
+	// search each bracket for a root
+	void bracket_roots(bool mode, bool loud = false);
+
+	void output_disp_eqn_a(bool mode, std::string& storage_directory);
+	void output_disp_eqn_aa(bool mode, std::string& storage_directory);
+
 private:
+	std::vector<interval> brackets; 
+
 	double eigeneqn_a(double x, int mm, bool t);
+	double eigeneqn_aa(double x, bool t);
 
 	double zbrent(double x1, double x2, double tol, bool t, int mm); // Brent method search for roots of eigeneqn_a
 };
@@ -178,12 +191,14 @@ public:
 
 	//void output_all_stats(std::string &storage_directory);
 
-	//void output_modes(bool mode, int N, double Lx, std::string &storage_directory); // Output solutions to a file
+	void output_modes(bool mode, int N, double Lx, std::string &storage_directory); // Output solutions to a file
+
+	double TE_TM(double x, int i, bool mode); // shape of waveguide mode
 
 private:
 	double phase(int i, bool t); // phase of waveguide mode
 
-	double TE_TM(double x, int i, bool mode); // shape of waveguide mode
+	//double TE_TM(double x, int i, bool mode); // shape of waveguide mode
 
 	//double eigeneqn(double x, bool t); // Non-linear equation for the propagation constants
 
@@ -195,7 +210,6 @@ class slab_fl_neff_B : protected slab {
 
 	// Case A => Field Oscillating in Core and Ridge
 	// For there to be a solution one has to have ns <= ncl < nr < nc
-	// Case A is not included in this project
 	
 	// Case B: Field Oscillating in Core Only
 	// For there to be a solution one has to have ncl < nm < nc, where nm = Max(nr,ns)
@@ -209,6 +223,8 @@ public:
 	void set_params(double width, double rib_width, double lambda, double ncore, double nsub, double nclad, double nrib);
 
 	void neff_search(bool mode);
+
+	void output_disp_eqn_b(bool mode, std::string& storage_directory); 
 
 	void report(bool mode);
 
@@ -233,12 +249,14 @@ public:
 
 	//void output_all_stats(std::string &storage_directory);
 
-	//void output_modes(bool mode, int N, double Lx, std::string &storage_directory); // Output solutions to a file
+	void output_modes(bool mode, int N, double Lx, std::string &storage_directory); // Output solutions to a file
+
+	double TE_TM(double x, int i, bool mode); // shape of waveguide mode
 
 private:
 	double phase(int i, bool t); // phase of waveguide mode
 
-	double TE_TM(double x, int i, bool mode); // shape of waveguide mode
+	//double TE_TM(double x, int i, bool mode); // shape of waveguide mode
 
 	//double eigeneqn(double x, bool t); // Non-linear equation for the propagation constants
 

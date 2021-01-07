@@ -15,4 +15,27 @@ namespace useful_funcs{
 	bool valid_filename_length(const std::string& name);
 }
 
+// Data type for an interval [xlower, xupper]
+class interval {
+public:
+	// Constructor
+	interval();
+	interval(double xl, double xu);
+
+	// Methods
+
+	void set_xl_xu(double xl, double xu);
+
+	bool has_bounds() { return interval_defined; }
+
+	double get_x_lower() { return xlower; }
+	double get_x_upper() { return xupper; }
+
+private:
+	bool interval_defined;
+	double xlower;
+	double xupper;
+};
+
+
 #endif
